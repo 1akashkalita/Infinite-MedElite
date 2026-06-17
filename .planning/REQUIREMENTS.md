@@ -16,7 +16,7 @@ All v1 requirements below are committed scope for this milestone (required take-
 ### CMS Data Engine
 
 - [ ] **DATA-01**: App fetches facility data from the CMS Provider Data Catalog API by CCN via a server-side route handler (no direct browser→CMS call; avoids CORS)
-- [ ] **DATA-02**: Every CMS response is validated by a Zod schema before reaching the UI or any export; suppressed/blank ("too few to report") fields are handled gracefully, not as errors
+- [x] **DATA-02**: Every CMS response is validated by a Zod schema before reaching the UI or any export; suppressed/blank ("too few to report") fields are handled gracefully, not as errors
 - [ ] **DATA-03**: Report shows the facility's location, **composed** from `provider_address` + `citytown` + `state` (e.g. `5280 SW 157th Ave, Miami, FL`) — **no ZIP**; the combined `location` field (which includes ZIP) is not reused
 - [ ] **DATA-04**: Report shows the four star ratings — Overall (`overall_rating`), Health Inspection (`health_inspection_rating`), Staffing (`staffing_rating`), and **Quality of Resident Care (`qm_rating`** — NOT `longstay_qm_rating`/`shortstay_qm_rating`)
 - [ ] **DATA-05**: Report shows census capacity (Number of Certified Beds) from CMS
@@ -102,7 +102,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-02 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Complete |
 | DATA-06 | Phase 1 | In progress (fixtures captured in 01-02; schema anchoring completes in 01-03) |
 | DATA-01 | Phase 2 | Pending |
 | DATA-03 | Phase 2 | Pending |
