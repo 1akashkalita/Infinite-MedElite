@@ -1,0 +1,209 @@
+import { describe, expect, it } from "vitest";
+import { parseCMSRow } from "@/lib/cms/parse";
+import { toFacilityData } from "@/lib/cms/mapper";
+import {
+  assembleViewModel,
+  ReportViewModelSchema,
+} from "@/lib/report/view-model";
+import providerFixture from "../../fixtures/provider-686123.json";
+
+// D-12: Use a fixed generatedAt for deterministic tests (no new Date() inside assembleViewModel).
+// RPT-02: assembleViewModel(facility, manual, generatedAt) is pure/deterministic.
+// NAME-02: displayName = manual.nameOverride?.trim() || facility.providerName — body only.
+// RPT-01: static header is NEVER affected by manual.nameOverride.
+
+// Build a real FacilityData from the captured 686123 fixture (D-11 / CLAUDE.md rule #3).
+const facility = toFacilityData(parseCMSRow(providerFixture[0]));
+const FIXED_DATE = "2026-06-17T12:00:00Z";
+const FIXED_DATE_OBJ = new Date(FIXED_DATE);
+
+describe("assembleViewModel — determinism (D-12/RPT-02)", () => {
+  it("is deterministic: same args produce the same model", () => {
+    const vm1 = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    const vm2 = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm1).toEqual(vm2);
+  });
+
+  it("reflects the injected generatedAt as an ISO string (D-12 — not a fresh clock)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.generatedAt).toBe("2026-06-17T12:00:00.000Z");
+  });
+
+  it("also accepts a string generatedAt and preserves it", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE);
+    expect(vm.generatedAt).toBe(FIXED_DATE);
+  });
+});
+
+describe("assembleViewModel — header (RPT-01)", () => {
+  it("vm.header matches assembleHeader(facility.state) — state-only, no facility name", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.header.platformLine).toBe("INFINITE — Managed by MEDELITE");
+    expect(vm.header.reportTitle).toBe("FACILITY ASSESSMENT SNAPSHOT");
+    expect(vm.header.stateLine).toBe("FL");
+  });
+
+  it("RPT-01: static header is not affected when nameOverride is set (NAME-02 isolation)", () => {
+    const vm = assembleViewModel(
+      facility,
+      { nameOverride: "Custom Facility Name" },
+      FIXED_DATE_OBJ,
+    );
+    expect(vm.header.platformLine).not.toContain("Custom Facility Name");
+    expect(vm.header.platformLine).toBe("INFINITE — Managed by MEDELITE");
+    expect(vm.header.reportTitle).toBe("FACILITY ASSESSMENT SNAPSHOT");
+    expect(vm.header.stateLine).toBe("FL");
+  });
+});
+
+describe("assembleViewModel — displayName (NAME-02)", () => {
+  it("displayName defaults to facility.providerName when no override", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.displayName).toBe(
+      "KENDALL LAKES HEALTHCARE AND REHAB CENTER",
+    );
+  });
+
+  it("displayName uses manual.nameOverride when provided", () => {
+    const vm = assembleViewModel(
+      facility,
+      { nameOverride: "Custom Name" },
+      FIXED_DATE_OBJ,
+    );
+    expect(vm.facility.displayName).toBe("Custom Name");
+  });
+
+  it("displayName falls back to providerName when nameOverride is whitespace-only", () => {
+    const vm = assembleViewModel(
+      facility,
+      { nameOverride: "   " },
+      FIXED_DATE_OBJ,
+    );
+    expect(vm.facility.displayName).toBe(
+      "KENDALL LAKES HEALTHCARE AND REHAB CENTER",
+    );
+  });
+
+  it("displayName falls back to providerName when nameOverride is empty string", () => {
+    const vm = assembleViewModel(
+      facility,
+      { nameOverride: "" },
+      FIXED_DATE_OBJ,
+    );
+    expect(vm.facility.displayName).toBe(
+      "KENDALL LAKES HEALTHCARE AND REHAB CENTER",
+    );
+  });
+});
+
+describe("assembleViewModel — facility fields", () => {
+  it("careCompareUrl contains the correct CCN as a string (D-16)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.careCompareUrl).toBe(
+      "https://www.medicare.gov/care-compare/details/nursing-home/686123",
+    );
+  });
+
+  it("processingDate matches the CMS processing date field (D-12)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.processingDate).toBe("2026-05-01");
+  });
+
+  it("providerName is the CMS operating name (provider_name, not legal_business_name)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.providerName).toBe(
+      "KENDALL LAKES HEALTHCARE AND REHAB CENTER",
+    );
+    expect(vm.facility.providerName).not.toContain(", LLC");
+  });
+
+  it("facility.ccn is the CCN string", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.ccn).toBe("686123");
+  });
+
+  it("starRatings carry raw number | null (D-08 — not pre-formatted strings)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    // For 686123: overall=5, healthInspection=5, staffing=2, qualityCare=5
+    expect(typeof vm.facility.starRatings.overall).toBe("number");
+    expect(vm.facility.starRatings.overall).toBe(5);
+    expect(vm.facility.starRatings.staffing).toBe(2);
+  });
+
+  it("certifiedBeds carries raw number | null (D-08)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.facility.certifiedBeds).toBe(150);
+  });
+
+  it("address has no ZIP field", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    const addr = vm.facility.address as Record<string, unknown>;
+    expect("zip" in addr).toBe(false);
+    expect("zipCode" in addr).toBe(false);
+    expect("zip_code" in addr).toBe(false);
+  });
+});
+
+describe("assembleViewModel — manual inputs", () => {
+  it("manual fields are empty object when no overrides provided", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    expect(vm.manual.emr).toBeUndefined();
+    expect(vm.manual.currentCensus).toBeUndefined();
+    expect(vm.manual.typeOfPatient).toBeUndefined();
+    expect(vm.manual.medicalCoverage).toBeUndefined();
+    expect(vm.manual.previousCoverage).toBeUndefined();
+  });
+
+  it("manual fields are populated when provided", () => {
+    const vm = assembleViewModel(
+      facility,
+      {
+        emr: "PointClickCare",
+        currentCensus: 120,
+        typeOfPatient: "SNF",
+        medicalCoverage: "Optometry, PCP, Podiatry",
+        previousCoverage: "Yes",
+      },
+      FIXED_DATE_OBJ,
+    );
+    expect(vm.manual.emr).toBe("PointClickCare");
+    expect(vm.manual.currentCensus).toBe(120);
+    expect(vm.manual.typeOfPatient).toBe("SNF");
+    expect(vm.manual.medicalCoverage).toBe("Optometry, PCP, Podiatry");
+    expect(vm.manual.previousCoverage).toBe("Yes");
+  });
+});
+
+describe("ReportViewModelSchema", () => {
+  it("accepts a well-formed ReportViewModel", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    const result = ReportViewModelSchema.safeParse(vm);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty object", () => {
+    const result = ReportViewModelSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a partial object (missing facility)", () => {
+    const result = ReportViewModelSchema.safeParse({
+      header: {
+        platformLine: "INFINITE — Managed by MEDELITE",
+        reportTitle: "FACILITY ASSESSMENT SNAPSHOT",
+        stateLine: "FL",
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an object with invalid careCompareUrl (not a URL)", () => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    const badVm = {
+      ...vm,
+      facility: { ...vm.facility, careCompareUrl: "not-a-url" },
+    };
+    const result = ReportViewModelSchema.safeParse(badVm);
+    expect(result.success).toBe(false);
+  });
+});
