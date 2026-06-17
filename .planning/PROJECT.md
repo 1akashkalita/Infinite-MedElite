@@ -34,7 +34,7 @@ Enter a CCN → instantly get an accurate, polished, downloadable facility snaps
 
 **Bonus (committed — these are how we exceed expectations):**
 
-- [ ] 12 CMS claims-based metrics — short-stay (STR) and long-stay (LT) hospitalization/ED measures pulled from CMS and shown in the report
+- [ ] 12 CMS claims-based metrics — **4 measures × {facility value, national avg, state avg}**, spanning three datasets: facility values from Medicare Claims Quality Measures (`ijh5-nb2v`, display the adjusted score), national + state averages from State US Averages (`xcdc-v8bm`, keyed `NATION`/`FL`). Match the reference report's labels and order, not its illustrative numbers.
 - [ ] Charts & visual cards — star ratings and key metrics rendered as polished visual cards/charts in both the web UI and the export, not just plain text
 - [ ] .docx export — a Word export option alongside the required PDF
 - [ ] Live preview — in-browser report preview that updates as the user types manual inputs, before downloading
@@ -54,7 +54,7 @@ Enter a CCN → instantly get an accurate, polished, downloadable facility snaps
 
 - **Existing code:** `medelite-report/` subdirectory holds a barebones Next.js 16.2.9 / React 19.2.4 / TypeScript (strict) / Tailwind v4 app. Currently only default scaffolding (`layout.tsx`, `page.tsx`, `globals.css`) plus one smoke test. Tooling is already wired: `npm run verify` (typecheck → lint → format:check → test) via `scripts/verify.mjs`, Vitest (node env), Prettier, ESLint, and a `fixture:capture` script.
 - **Not yet present:** `@react-pdf/renderer`, `zod`, charting lib, and `.docx` generation lib all need to be added. `tests/fixtures/` is empty — the `provider-686123.json` fixture referenced by CLAUDE.md still needs to be captured.
-- **Data source:** public CMS Provider Data Catalog API. Every field used must trace to the `NH_Data_Dictionary`, a captured fixture, or a verified live response — never from memory.
+- **Data source:** public CMS Provider Data Catalog API — **three** datasets (verified live via the metastore): Provider Information `4pq5-n9py` (name, address components, certified beds, 4 star ratings incl. `qm_rating` = Quality), Medicare Claims Quality Measures `ijh5-nb2v` (the 4 facility hospitalization/ED measures), and State US Averages `xcdc-v8bm` (national + state averages, keyed `NATION`/`FL`). Every field used must trace to the `NH_Data_Dictionary`, a captured fixture, or a verified live response — never from memory; re-resolve dataset IDs via the metastore each build.
 - **Reference test case:** CCN `686123` (Kendall Lakes Healthcare and Rehab Center, FL) → `https://www.medicare.gov/care-compare/details/nursing-home/686123`.
 - **Audience:** internship reviewers grading a Medelite take-home; secondary persona is a Medelite operator generating a facility snapshot.
 - **Authoritative spec:** `CLAUDE.md` (standing rules + field mapping) and `CHECKLIST.md` (per-phase acceptance criteria) already exist in the repo and govern the build.
@@ -78,6 +78,11 @@ Enter a CCN → instantly get an accurate, polished, downloadable facility snaps
 | Deploy on Vercel | Native Next.js 16 host, free tier, instant live URL — fits the "live working URL" deliverable | — Pending |
 | Commit to all four bonuses + hardened error handling | User wants to land clearly above expectations with a week of runway | — Pending |
 | Use CCN 686123 (Kendall Lakes, FL) as the reference/test facility | Specified in CLAUDE.md; anchors the fixture and tests | — Pending |
+| The "12 metrics" = 4 measures × {facility, national avg, state avg}, across 3 datasets | Per NH_Data_Dictionary + reference docs + live API (corrects the earlier 4×score reading); averages live in `xcdc-v8bm`, not the claims provider file | ✓ Good |
+| Display the **adjusted** (risk-adjusted) claims score | Matches what Care Compare shows; verify against live 686123 | — Pending |
+| Quality star rating = `qm_rating` column (not long/short-stay QM) | Avoids mismapping the adjacent sub-rating columns | ✓ Good |
+| Location = `provider_address` + `citytown` + `state`, no ZIP | Reference output excludes ZIP; do not reuse the combined `location` field | ✓ Good |
+| Match reference report labels/order, not its numbers | Reference-PDF values are illustrative; fixture/live API is the value source; preserve exact (garbled) label text | ✓ Good |
 
 ## Evolution
 

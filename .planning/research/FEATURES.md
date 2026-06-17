@@ -57,7 +57,9 @@ Exactly **4 measure codes** exist in this dataset (all with `used_in_quality_mea
 | `551` | Long Stay | Number of hospitalizations per 1000 long-stay resident days | rate |
 | `552` | Long Stay | Number of outpatient emergency department visits per 1000 long-stay resident days | rate |
 
-Each measure record contains three numeric scores: `adjusted_score`, `observed_score`, `expected_score` (4 measures × 3 scores = **12 numeric data points** — this is the "12 hospitalization/ED metrics" referenced in CLAUDE.md).
+> **CORRECTION (2026-06-16):** The "12 hospitalization/ED metrics" is **NOT** 4 measures × the 3 scores below. It is **4 measures × {facility value, national avg, state avg}** across **three** datasets — facility values from `ijh5-nb2v` (this file), national + state averages from State US Averages `xcdc-v8bm` (keyed `state_or_nation` = `NATION`/`FL`). See SUMMARY.md Reconciled Q3 for the authoritative version.
+
+Each `ijh5-nb2v` measure record contains three numeric scores — `adjusted_score`, `observed_score`, `expected_score`. **Display the `adjusted_score`** (risk-adjusted, what Care Compare shows) as the facility value; the other two are context. The provider file has **no average columns** — averages come from `xcdc-v8bm`.
 
 Footnotes apply: a `footnote_for_score` of `"9"` means "number of residents too small to report" — scores will be empty strings when suppressed.
 
@@ -196,7 +198,7 @@ The differentiators that will stand out most:
 
 | Anti-Feature | Why Requested | Why Problematic | What to Do Instead |
 |-------------|--------------|-----------------|-------------------|
-| All 17 MDS quality measures in the report | More data seems more complete | Clutter; the brief specifies 12 hospitalization/ED metrics (claims measures), not all MDS measures; adds no value for the operational "snapshot" purpose | Show only the 4 claims measures (521, 522, 551, 552) with their 3 scores each |
+| All 17 MDS quality measures in the report | More data seems more complete | Clutter; the brief specifies 12 hospitalization/ED metrics (claims measures), not all MDS measures; adds no value for the operational "snapshot" purpose | Show only the 4 claims measures (521, 522, 551, 552), each as facility value (adjusted) + national avg + state avg = 12 |
 | Batch CCN lookup / multi-facility | Seems like a logical extension | Blows scope in the one-week timeline; the brief is explicit: "one CCN at a time" | Keep it single-CCN |
 | Authentication / login | "Real" apps have auth | Single-use internal tool per brief; no user concept needed | No auth at all |
 | Saving reports to a database | Persistence feels professional | Stateless generation is intentional; adds backend complexity with no reviewer benefit | Generate on demand; no persistence |
@@ -294,7 +296,7 @@ Claims Metrics (Bonus)
 
 ### Add After Core (Committed Bonuses)
 
-- [ ] Claims measures (dataset `ijh5-nb2v`): 4 measures × 3 scores = 12 data points, with state/national context from `xcdc-v8bm`
+- [ ] Claims measures: 4 measures × {facility value (`ijh5-nb2v`, adjusted score) + national avg + state avg (`xcdc-v8bm`)} = 12 data points
 - [ ] Live preview: `usePDF` hook + 300ms debounce + skeleton during generation
 - [ ] Star rating visual cards: filled/outline glyphs with color-coded bands
 - [ ] .docx export: `docx` npm package mirroring PDF content

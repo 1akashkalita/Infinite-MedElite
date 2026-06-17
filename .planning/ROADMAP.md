@@ -40,8 +40,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: DATA-01, DATA-03, DATA-04, DATA-05, NAME-01, NAME-02, RPT-01, RPT-02
+**Notes**:
+  - Location is **composed** from `provider_address` + `citytown` + `state` (e.g. `5280 SW 157th Ave, Miami, FL`), **no ZIP** — do not reuse the combined `location` field.
+  - Quality star rating maps to the **`qm_rating`** column (not `longstay_qm_rating`/`shortstay_qm_rating`); Overall/Health Inspection/Staffing → `overall_rating`/`health_inspection_rating`/`staffing_rating`.
 **Success Criteria** (what must be TRUE):
-  1. `GET /api/facility?ccn=686123` returns 200 with a fully typed `FacilityData` JSON body containing name, address, certified beds, and all four star ratings
+  1. `GET /api/facility?ccn=686123` returns 200 with a fully typed `FacilityData` JSON body containing name, composed address (no ZIP), certified beds, and all four star ratings (with Quality from `qm_rating`)
   2. `GET /api/facility?ccn=000000` returns 404 with a distinct error payload, and `GET /api/facility?ccn=12` returns 400 (invalid format) — each error kind is distinct
   3. `assembleHeader("FL")` returns the exact static branding strings and does not accept a facility-name argument (TypeScript enforces this at compile time)
   4. `assembleViewModel(facilityData, manualInputs)` produces a `ReportViewModel` where `displayName` respects the manual override, and `careCompareUrl` contains the correct CCN
@@ -78,15 +81,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 **UI hint**: yes
 
 ### Phase 5: Claims-Based Metrics
-**Goal**: The report displays all 12 CMS claims-based hospitalization/ED data points (4 measures x 3 scores) from dataset `ijh5-nb2v`, with suppressed or "too few to report" values rendering cleanly rather than as blanks or errors, in both the web preview and the PDF.
+**Goal**: The report displays all 12 CMS claims-based hospitalization/ED data points — the 4 measures, each with **facility value + national avg + state avg** — drawn from **three** datasets (Provider Info `4pq5-n9py` already wired in P2; facility values from Medicare Claims Quality Measures `ijh5-nb2v`; national/state averages from State US Averages `xcdc-v8bm`), with suppressed values rendering cleanly, matching the reference report's labels/order, in both the web preview and the PDF.
 **Mode:** mvp
 **Depends on**: Phase 4
-**Requirements**: CLM-01, CLM-02
+**Requirements**: CLM-01, CLM-02, CLM-03
+**Notes**:
+  - Resolve/confirm `ijh5-nb2v` and `xcdc-v8bm` via the CMS metastore before writing schemas (don't assume from memory — rule #3). The claims provider file has **no average columns**; averages live only in `xcdc-v8bm` (keyed `state_or_nation` = `NATION`/`FL`; measure columns are hash-suffixed — match by description).
+  - Display the **adjusted (risk-adjusted)** facility score; verify against the live 686123 profile.
+  - The 12 = 4 measures × {facility, national, state} — NOT 4 × adjusted/observed/expected.
 **Success Criteria** (what must be TRUE):
-  1. The web preview shows a metrics table with 4 hospitalization/ED measures (Short-Stay Hospitalization, Short-Stay ED Visit, Long-Stay Hospitalization, Long-Stay ED Visit), each with adjusted, observed, and expected scores — 12 data points total for CCN 686123
-  2. A facility with suppressed claims data (footnote code "9" or empty measure score) renders "Not reported (small sample)" in the metrics table — not a blank cell or an unhandled null
-  3. The PDF export includes the claims metrics section with matching values to the web preview
-  4. The claims schema tests cover: valid 4-measure response, suppressed single measure, and fewer-than-4-measures response (no throws — graceful partial data)
+  1. The web preview shows the 4 hospitalization/ED measures (short-stay rehospitalization %, short-stay outpatient ED %, long-stay hospitalizations per 1,000 resident-days, long-stay ED visits per 1,000 resident-days), each with facility value + national avg + state avg — 12 data points total for CCN 686123
+  2. The metrics section reproduces the reference report's **labels and order exactly** — including its slightly garbled text ("STR State National Avg. for Hospitalization", the bare "ED Visit" line); the displayed values come from the fixture/live API, not the reference PDF's illustrative numbers
+  3. A facility with suppressed claims data (`footnote_for_score` set or empty-string score) renders "Not reported (small sample)" — not a blank cell or an unhandled null
+  4. The PDF export includes the claims metrics section with values and layout matching the web preview
+  5. Tests cover: facility values (`ijh5-nb2v`) joined with `NATION`/state-`FL` averages (`xcdc-v8bm`), a suppressed measure, and fewer-than-4-measures (graceful partial data, no throws)
 **Plans**: TBD
 **UI hint**: yes
 

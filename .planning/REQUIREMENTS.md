@@ -17,8 +17,8 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 - [ ] **DATA-01**: App fetches facility data from the CMS Provider Data Catalog API by CCN via a server-side route handler (no direct browser→CMS call; avoids CORS)
 - [ ] **DATA-02**: Every CMS response is validated by a Zod schema before reaching the UI or any export; suppressed/blank ("too few to report") fields are handled gracefully, not as errors
-- [ ] **DATA-03**: Report shows the facility's full address (location) from CMS
-- [ ] **DATA-04**: Report shows the four star ratings — Overall, Health Inspection, Staffing, Quality Care — from CMS
+- [ ] **DATA-03**: Report shows the facility's location, **composed** from `provider_address` + `citytown` + `state` (e.g. `5280 SW 157th Ave, Miami, FL`) — **no ZIP**; the combined `location` field (which includes ZIP) is not reused
+- [ ] **DATA-04**: Report shows the four star ratings — Overall (`overall_rating`), Health Inspection (`health_inspection_rating`), Staffing (`staffing_rating`), and **Quality of Resident Care (`qm_rating`** — NOT `longstay_qm_rating`/`shortstay_qm_rating`)
 - [ ] **DATA-05**: Report shows census capacity (Number of Certified Beds) from CMS
 - [ ] **DATA-06**: Every CMS field used traces to the captured fixture (`provider-686123.json`) or the NH_Data_Dictionary — never a field name from memory
 
@@ -29,7 +29,7 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 ### Manual Operational Inputs
 
-- [ ] **INPT-01**: User can enter EMR, Current Census, Type of Patient, Medical Coverage, and Previous Provider Performance
+- [ ] **INPT-01**: User can enter all of: EMR, Current Census, Type of Patient, **Medical Coverage** (free text, e.g. "Optometry, PCP, Podiatry" — a distinct field, not folded into "Medelite History"), and Previous Provider Performance
 - [ ] **INPT-02**: User can set "Previous Coverage from Medelite" via a Yes/No control
 - [ ] **INPT-03**: Manual inputs appear in the report body alongside the CMS data
 
@@ -54,8 +54,9 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 ### Claims-Based Metrics (bonus)
 
-- [ ] **CLM-01**: Report displays the 12 claims-based hospitalization/ED metrics (short-stay and long-stay; 4 measures × adjusted/observed/expected) from CMS
-- [ ] **CLM-02**: Suppressed or "too few to report" claims values render cleanly rather than as blanks or errors
+- [ ] **CLM-01**: Report displays the 12 claims-based hospitalization/ED data points — the **4 measures** (short-stay rehospitalization %, short-stay outpatient ED %, long-stay hospitalizations per 1,000 resident-days, long-stay ED visits per 1,000 resident-days) each shown with **facility value + national avg + state avg**. Facility values come from Medicare Claims Quality Measures (`ijh5-nb2v`, display the **adjusted/risk-adjusted** score); national + state averages come from State US Averages (`xcdc-v8bm`, keyed `NATION`/`FL`). Dataset IDs resolved/verified via the CMS metastore.
+- [ ] **CLM-02**: Suppressed or "too few to report" claims values (e.g. `footnote_for_score` set, or empty-string score) render cleanly (e.g. "Not reported (small sample)") rather than as blanks, nulls, or errors
+- [ ] **CLM-03**: The metrics section matches the reference report's **labels and order** (including its exact, slightly garbled label text such as "STR State National Avg. for Hospitalization" and the bare "ED Visit" line); displayed **values come from the fixture/live API**, not the reference PDF's illustrative numbers
 
 ### Visualizations (bonus)
 
@@ -76,10 +77,12 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 Acknowledged, deferred — stretch goals if time allows after v1 is solid.
 
+> Note: state/national averages were **promoted into v1** — they are 8 of the 12 metrics in CLM-01 (`xcdc-v8bm`), not a stretch.
+
 ### Benchmarks
 
-- **BENCH-01**: Show state/national averages next to each claims metric (CMS dataset `xcdc-v8bm`) for context
-- **BENCH-02**: Comparison charts (facility vs state/national) beyond single-facility cards
+- **BENCH-01**: Comparison charts (facility vs state vs national) beyond the per-metric value columns
+- **BENCH-02**: Visual flag when a facility value is better/worse than its state and national benchmark
 
 ## Out of Scope
 
@@ -125,13 +128,14 @@ Which phases cover which requirements. Populated during roadmap creation.
 | PDF-03 | Phase 4 | Pending |
 | CLM-01 | Phase 5 | Pending |
 | CLM-02 | Phase 5 | Pending |
+| CLM-03 | Phase 5 | Pending |
 | DOCX-01 | Phase 6 | Pending |
 | VIZ-01 | Phase 7 | Pending |
 | VIZ-02 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 27 total
-- Mapped to phases: 27/27
+- v1 requirements: 28 total
+- Mapped to phases: 28/28
 - Unmapped: 0
 
 ---

@@ -42,10 +42,12 @@ npm install @react-pdf/renderer@^4.5.1 zod@^4.4.3 docx@^9.7.1 recharts@^2.15.4 r
 
 | Dataset | ID | Primary Use |
 |---------|----|----|
-| NH Provider Information | `4pq5-n9py` | Core facility data, star ratings, beds |
-| NH Claims-Based Quality Measures | `ijh5-nb2v` | 4 hospitalization/ED measures (the "12 metrics") |
-| NH State/National Averages | `xcdc-v8bm` | Benchmark comparison column |
+| NH Provider Information | `4pq5-n9py` | Core facility data, the 4 star ratings (`qm_rating` = Quality), beds, address components |
+| Medicare Claims Quality Measures | `ijh5-nb2v` | The **4 facility** hospitalization/ED measures (display the adjusted score). No averages. |
+| State US Averages | `xcdc-v8bm` | **Required** — national + state averages for the 4 measures (keyed `state_or_nation` = `NATION`/`FL`). Supplies 8 of the 12. |
 | NH MDS Quality Measures | `djen-97ju` | 17 MDS measures — out of scope for v1 |
+
+> **The "12 metrics" = 4 measures × {facility value, national avg, state avg}, across the first three datasets above** — NOT 4 measures × adjusted/observed/expected from one file. See corrected Reconciled Question #3.
 
 **CMS API endpoint pattern:**
 ```
@@ -73,7 +75,7 @@ Research confirms the feature set from PROJECT.md. Table stakes are low-to-mediu
 - Vercel deployment + public GitHub repo
 
 **Should have (differentiators — committed bonuses):**
-- 4 claims-based hospitalization/ED measures x 3 scores each = 12 data points (dataset `ijh5-nb2v`), with state/national benchmark from `xcdc-v8bm`
+- 12 claims-based data points = 4 hospitalization/ED measures × {facility value (`ijh5-nb2v`, adjusted score), national avg + state avg (`xcdc-v8bm`, keyed `NATION`/`FL`)}; match the reference report's labels/order, not its illustrative numbers
 - Live in-browser report preview via `usePDF` hook + 300ms debounce
 - Star rating visual cards with filled/outline star glyphs, color-coded by band (green >=4, amber =3, red <=2)
 - .docx export (`docx` library, `Packer.toBuffer()` in Route Handler)
@@ -152,15 +154,23 @@ These points were in tension across research files. Both sides are documented be
 
 **Action (Phase 2):** Add `serverExternalPackages: ['@react-pdf/renderer']` to `next.config.ts` immediately after installing the package. Verify with `npm run verify:full` (which runs `next build`). If the standalone build omits the package, apply the `--webpack` flag as a temporary workaround while tracking the upstream issue.
 
-### 3. "12 hospitalization/ED metrics" interpretation
+### 3. "12 hospitalization/ED metrics" interpretation — CORRECTED 2026-06-16
 
-**FEATURES.md position (authoritative):** 4 distinct CMS claims measures (codes 521, 522, 551, 552) x 3 numeric scores per measure (`adjusted_score`, `observed_score`, `expected_score`) = 12 numeric data points. Dataset is `ijh5-nb2v` (NH Claims-Based Quality Measures). Confirmed with live API data for CCN 686123.
+**Earlier (incorrect) research reading:** FEATURES.md/STACK.md framed the 12 as 4 claims measures × 3 numeric scores (`adjusted_score`/`observed_score`/`expected_score`) from a single dataset (`ijh5-nb2v`). **This is wrong** and would send you hunting for averages in a file that has none.
 
-**STACK.md position:** `djen-97ju` (MDS Quality Measures) was the initial candidate but has 17 MDS measures, not the 4 claims measures. `ijh5-nb2v` is the correct dataset.
+**Correct interpretation (per NH_Data_Dictionary + both reference docs, re-verified against the live metastore + datasets on 2026-06-16):** The 12 = **4 measures × {facility value, national avg, state avg}**, spanning **three** datasets:
 
-**Working interpretation:** "12 hospitalization/ED metrics" = `ijh5-nb2v` dataset, 4 measure codes, 3 scores each. This is HIGH confidence from live API verification.
+- **4 facility values** — Medicare Claims Quality Measures `ijh5-nb2v` (dict. Table 12). Rows carry `measure_code`/`measure_description` and `adjusted_score`/`observed_score`/`expected_score` + `footnote_for_score`. **Display the adjusted (risk-adjusted) score** (what Care Compare shows). The file has **no average columns**.
+- **4 national averages + 4 state averages** — State US Averages `xcdc-v8bm` (dict. Table 3), keyed by `state_or_nation` (`NATION` and the 2-letter state code, e.g. `FL`). The 4 measure columns have hash-suffixed slugs — match by description.
+- The four measures: short-stay rehospitalization %, short-stay outpatient ED %, long-stay hospitalizations per 1,000 resident-days, long-stay ED visits per 1,000 resident-days.
 
-**Confirm during Phase 5:** Cross-reference measure codes 521, 522, 551, 552 against the `NH_Data_Dictionary` (Table 11 or 12) to verify descriptions match the CLAUDE.md "Short-Stay Hospitalization", "Short-Stay ED Visit", "Long-Stay Hospitalization", "Long-Stay ED Visit" labels.
+**Phase 5:** resolve both dataset IDs via the metastore (don't trust from memory — rule #3); join facility row (`ijh5-nb2v`, filter `cms_certification_number_ccn`) with `NATION` + state averages (`xcdc-v8bm`); verify the adjusted score against the live 686123 profile. Reproduce the reference report's labels/order exactly (including its garbled text like "STR State National Avg. for Hospitalization" and the bare "ED Visit" line); values come from the fixture/live API, not the reference PDF's illustrative numbers.
+
+### 3a. Star-rating, location & manual-input clarifications (added 2026-06-16)
+
+- **Quality of Resident Care rating = `qm_rating`** in `4pq5-n9py` — NOT the adjacent `longstay_qm_rating`/`shortstay_qm_rating`. Other three: `overall_rating`, `health_inspection_rating`, `staffing_rating`.
+- **Location is composed** from `provider_address` + `citytown` + `state` → `5280 SW 157th Ave, Miami, FL` (no ZIP). Do not reuse the combined `location` field (it includes ZIP).
+- **Six distinct manual inputs**: EMR, Current Census, Type of Patient, Previous Coverage (Yes/No), Previous Provider Performance, and **Medical Coverage** (free text, e.g. "Optometry, PCP, Podiatry"). "Medelite History" folds in Previous Coverage + Previous Provider Performance but **Medical Coverage is its own field** — do not drop it.
 
 ### 4. CCN validation regex: `/^\d{6}$/` vs alphanumeric
 
@@ -268,18 +278,18 @@ The build order is tightly constrained by data dependencies. Nothing can be buil
 **Rationale:** The core data pipeline and PDF export are complete. Claims metrics are a second CMS API call that uses the same patterns already established. This phase adds the "12 data points" differentiator.
 
 **Delivers:**
-- `src/lib/cms/claims-schema.ts` — Zod schema for `ijh5-nb2v` dataset
-- `src/lib/cms/claims-mapper.ts` — 4 measures x 3 scores to `HospMetrics`
-- `/api/facility` route updated to fetch claims measures in parallel with provider info
-- `MetricsTable.tsx` — web UI table: 4 measures, 3 scores + national average as 4th column
-- Suppressed measure display: `footnote_for_score: "9"` to "Not reported (small sample)"
+- `src/lib/cms/claims-schema.ts` + `averages-schema.ts` — Zod schemas for `ijh5-nb2v` (facility) and `xcdc-v8bm` (averages)
+- `src/lib/cms/claims-mapper.ts` — join facility row (adjusted score) with `NATION` + state averages → `HospMetric { measure, facility, nationalAvg, stateAvg }` × 4
+- `/api/facility` route updated to fetch claims (`ijh5-nb2v` by CCN) and averages (`xcdc-v8bm` by `NATION` + state) alongside provider info
+- `MetricsTable.tsx` — web UI table: 4 measures × {facility, national avg, state avg} = 12, labels/order matching the reference report exactly (incl. garbled text)
+- Suppressed measure display: `footnote_for_score` set / empty score → "Not reported (small sample)"
 - Claims measures section in `<ReportPDF />` (react-pdf native table layout)
-- Tests: claims schema (valid, suppressed, fewer than 4 measures returned)
+- Tests: facility+averages join, suppressed measure, fewer-than-4-measures (graceful)
 
 **Must address:**
-- Open question #3 (12 metrics interpretation) — confirm measure codes 521/522/551/552 against NH_Data_Dictionary before writing schema
-- Dataset `ijh5-nb2v` (not `djen-97ju`) for claims measures
-- National average from `xcdc-v8bm` — note truncated column name pattern (hash suffix on long column names)
+- Open question #3 (12 metrics) — **the 12 = 4 measures × {facility, national, state}, 3 datasets**; resolve `ijh5-nb2v` + `xcdc-v8bm` via the metastore (rule #3) before writing schemas
+- Averages come **only** from `xcdc-v8bm` (keyed `state_or_nation`; hash-suffixed measure columns) — the claims provider file has none
+- Display the **adjusted** facility score; verify against the live 686123 profile; match reference labels, not its numbers
 
 **Research flag:** Minor — verify measure code descriptions against NH_Data_Dictionary Table 11 or 12 before writing the mapper.
 
@@ -356,7 +366,7 @@ The following items are unresolved and must be handled during Phase 1 before wri
 
 2. **`serverExternalPackages` explicit vs implicit** — STACK.md says the package is on the auto-list (no config needed); PITFALLS.md says add it explicitly due to Turbopack bug #88844. Decision: add it explicitly, verify with `npm run verify:full`. Gap closes during Phase 2.
 
-3. **Claims measure code descriptions vs NH_Data_Dictionary** — FEATURES.md confirmed 4 codes (521, 522, 551, 552) from live data but cross-reference against Table 11/12 of the data dictionary to verify descriptions match the CLAUDE.md "STR/Short-Stay, LT/Long-Stay" labels. Gap closes during Phase 5.
+3. **Claims metrics composition** — RESOLVED 2026-06-16 (see corrected Reconciled Q3): the 12 = 4 measures × {facility value `ijh5-nb2v` (adjusted score), national avg + state avg `xcdc-v8bm`}, across 3 datasets — not 4 × adjusted/observed/expected. Remaining Phase-5 task: re-resolve both dataset IDs via the metastore and confirm measure descriptions/labels against NH_Data_Dictionary Table 12 (facility) and Table 3 (averages) before writing schemas.
 
 4. **Live Vercel font rendering** — Font behavior in Vercel serverless functions cannot be verified until there is a deployed URL. Design the PDF using built-in PDF fonts (Helvetica) to avoid the risk entirely. If custom fonts are desired, use CDN URLs only. Gap closes at the end of Phase 4 when the first Vercel deploy is tested.
 

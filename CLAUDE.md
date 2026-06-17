@@ -27,16 +27,30 @@ Map per the `NH_Data_Dictionary`. CMS source = Provider Data Catalog API; the re
 | Report field | Source |
 | --- | --- |
 | Name of Facility | CMS legal name, **overridable** by manual text (body only) |
-| Location | CMS (full address) |
+| Location | CMS — **compose** from `provider_address` + `citytown` + `state` → e.g. `5280 SW 157th Ave, Miami, FL` (**no ZIP**). Do **not** reuse the combined `location` field; it includes the ZIP. |
 | Census Capacity | CMS "Number of Certified Beds" |
-| Star Ratings (Overall, Health Inspection, Staffing, Quality Care) | CMS |
-| EMR, Current Census, Type of Patient, Medical Coverage, Previous Provider Performance | Manual input |
+| Star Ratings (Overall, Health Inspection, Staffing, Quality Care) | CMS Provider Information — `overall_rating`, `health_inspection_rating`, `staffing_rating`, and **`qm_rating`** for "Quality of Resident Care" (NOT the adjacent `longstay_qm_rating` / `shortstay_qm_rating`). |
+| EMR, Current Census, Type of Patient, **Medical Coverage**, Previous Provider Performance | Manual input — six manual fields total (with the Yes/No row below). **Medical Coverage** is its own free-text field (e.g. "Optometry, PCP, Podiatry"); do not fold it into "Medelite History". |
 | Previous Coverage from Medelite | Manual input (Yes/No dropdown) |
-| 12 Hospitalization/ED metrics (STR→Short-Stay, LT→Long-Stay) | CMS claims-based — **bonus** |
+| 12 Hospitalization/ED metrics | CMS claims-based — **bonus**; **4 measures × {facility value, national avg, state avg}** across **three** datasets. See "Claims metrics" below. |
 
 **Test case**: CCN `686123` (Kendall Lakes Healthcare and Rehab Center, FL) → `https://www.medicare.gov/care-compare/details/nursing-home/686123`.
 
 Bonus (optional): 12 hospitalization/ED metrics, `.docx` export, charts/cards.
+
+### Claims metrics, ratings & location — verified specifics
+
+Dataset IDs resolved live via the CMS provider-data metastore (`/metastore/schemas/dataset/items`); re-confirm each build (distribution IDs rotate — query the stable dataset-ID endpoint `.../datastore/query/{datasetId}/0`):
+
+| Dataset | ID | Provides |
+| --- | --- | --- |
+| Provider Information | `4pq5-n9py` | Name, address components, certified beds, the 4 star ratings |
+| Medicare Claims Quality Measures (dict. Table 12) | `ijh5-nb2v` | The **4 facility** measures (filter `cms_certification_number_ccn`); each row has `measure_code`/`measure_description`, `adjusted_score`/`observed_score`/`expected_score`, `footnote_for_score`. **No average columns.** |
+| State US Averages (dict. Table 3) | `xcdc-v8bm` | The **national + state** averages, keyed by `state_or_nation` = `NATION` / `FL`. Measure columns have hash-suffixed names — match by description, not column slug. |
+
+- **The 12 = 4 measures × 3 sources** (facility value, national avg, state avg) — **not** 4 measures × adjusted/observed/expected. The four measures: short-stay rehospitalization %, short-stay outpatient ED %, long-stay hospitalizations per 1,000 resident-days, long-stay ED visits per 1,000 resident-days. The claims provider file holds only the facility values; the 8 averages come from `xcdc-v8bm`.
+- **Facility score to display: the adjusted (risk-adjusted) score** (what Care Compare shows). Verify against the live 686123 profile.
+- **Match the reference report's labels and order, not its numbers.** Reference-PDF values (18.7%, 1.86, …) are illustrative; the captured fixture / live API is the source of truth for values, which may differ. Preserve the reference's exact (slightly garbled) label text — e.g. "STR State National Avg. for Hospitalization" and the bare "ED Visit" line — since the requirement is to match the output.
 
 ## Next.js 16 caveat
 
@@ -109,10 +123,11 @@ Verified library versions and CMS API details (full detail in `.planning/researc
 
 | Dataset | ID | Holds |
 |---------|----|-------|
-| NH Provider Information | `4pq5-n9py` | Core facility info, the 4 star ratings, certified beds, address |
-| NH Claims-Based Measures | `ijh5-nb2v` | The 12 hospitalization/ED data points (4 measures: 521/522/551/552 × adjusted/observed/expected) |
-| State/National Benchmarks | `xcdc-v8bm` | State + national averages for claims measures (v2 stretch) |
+| NH Provider Information | `4pq5-n9py` | Core facility info, the 4 star ratings (`qm_rating` = Quality), certified beds, address components |
+| Medicare Claims Quality Measures | `ijh5-nb2v` | The **4 facility** hospitalization/ED measures (`measure_code`/`measure_description`; adjusted/observed/expected scores; `footnote_for_score`). **No averages.** Display the adjusted score. |
+| State US Averages | `xcdc-v8bm` | **Required** (not v2): national + state averages for the 4 measures, keyed by `state_or_nation` (`NATION`/`FL`). 4 facility + 4 national + 4 state = the 12. |
 
+- **The 12 metrics span 3 datasets**, not one: facility values from `ijh5-nb2v`, averages from `xcdc-v8bm`. The claims provider file has no average columns — do not hunt for averages there.
 - **CCN is always a string** (preserve leading zeros; alphanumeric state codes exist — do NOT use `^\d{6}$` as the only gate). The exact CCN filter field name is resolved by the captured fixture, per standing rule #3.
 - Suppressed/"too few to report" CMS values come back as **empty strings**, not null — Zod schemas must handle `""` and use `.nullable().optional()` on rating fields.
 
