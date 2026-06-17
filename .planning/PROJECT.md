@@ -16,7 +16,9 @@ Enter a CCN → instantly get an accurate, polished, downloadable facility snaps
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate. The existing app is default Next.js scaffolding only.)
+- [x] **Foundation & CMS data layer (Phase 1, 2026-06-17)** — five production libs installed at pinned versions (`recharts` held at v2 for react-pdf-charts compat); the three CMS fixtures for CCN 686123 captured from the live API with a `_capture-manifest.json` provenance record; `CMSRowSchema` + typed parse helpers (`parseCMSRow` / `safeParseCMSRow`) validate provider rows (empty→null, real `"0"` preserved, leading-zero CCN/ZIP kept as strings, non-string/malformed input rejected). Anchors DATA-02 + DATA-06; `npm run verify` green.
+
+> The user-facing Active items below remain hypotheses until shipped — Phase 1 delivers the validated foundation they build on, not a user-facing feature yet.
 
 ### Active
 
@@ -53,7 +55,7 @@ Enter a CCN → instantly get an accurate, polished, downloadable facility snaps
 ## Context
 
 - **Existing code:** `medelite-report/` subdirectory holds a barebones Next.js 16.2.9 / React 19.2.4 / TypeScript (strict) / Tailwind v4 app. Currently only default scaffolding (`layout.tsx`, `page.tsx`, `globals.css`) plus one smoke test. Tooling is already wired: `npm run verify` (typecheck → lint → format:check → test) via `scripts/verify.mjs`, Vitest (node env), Prettier, ESLint, and a `fixture:capture` script.
-- **Not yet present:** `@react-pdf/renderer`, `zod`, charting lib, and `.docx` generation lib all need to be added. `tests/fixtures/` is empty — the `provider-686123.json` fixture referenced by CLAUDE.md still needs to be captured.
+- **Added in Phase 1 (2026-06-17):** `@react-pdf/renderer`, `zod`, `docx`, `recharts` (v2), and `react-pdf-charts` are installed at pinned versions. `tests/fixtures/` now holds the captured `provider-686123.json`, `claims-686123.json`, and `averages-xcdc.json` (plus `_capture-manifest.json` provenance). The provider Zod schema + typed parse layer (`src/lib/cms/`) exist; the claims/averages Zod schemas are deferred to Phase 5 (fixtures captured early to anchor field names).
 - **Data source:** public CMS Provider Data Catalog API — **three** datasets (verified live via the metastore): Provider Information `4pq5-n9py` (name, address components, certified beds, 4 star ratings incl. `qm_rating` = Quality), Medicare Claims Quality Measures `ijh5-nb2v` (the 4 facility hospitalization/ED measures), and State US Averages `xcdc-v8bm` (national + state averages, keyed `NATION`/`FL`). Every field used must trace to the `NH_Data_Dictionary`, a captured fixture, or a verified live response — never from memory; re-resolve dataset IDs via the metastore each build.
 - **Reference test case:** CCN `686123` (Kendall Lakes Healthcare and Rehab Center, FL) → `https://www.medicare.gov/care-compare/details/nursing-home/686123`.
 - **Audience:** internship reviewers grading a Medelite take-home; secondary persona is a Medelite operator generating a facility snapshot.
@@ -102,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-15 after initialization*
+*Last updated: 2026-06-17 after Phase 1 (Foundation & CMS Data Layer) completion*
