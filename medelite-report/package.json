@@ -16,9 +16,14 @@
     "fixture:capture": "tsx scripts/capture-fixture.ts"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
+    "docx": "^9.7.1",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-pdf-charts": "^1.0.0",
+    "recharts": "^2.15.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
