@@ -22,6 +22,12 @@ All v1 requirements below are committed scope for this milestone (required take-
 - [ ] **DATA-05**: Report shows census capacity (Number of Certified Beds) from CMS
 - [x] **DATA-06**: Every CMS field used traces to the captured fixture (`provider-686123.json`) or the NH_Data_Dictionary — never a field name from memory
 
+> **Phase 1 design decisions & scope boundary (DATA-02 / DATA-06):**
+> - **Required-key + `.nullable()`-value (not `.optional()`).** The roadmap's original `.nullable().optional()` wording for star-rating fields was deliberately refined per CONTEXT D-06: `.optional()` was **dropped** on depended-on keys so a renamed/removed CMS column fails `safeParse` **loudly** instead of silently passing as `undefined`. Same "a suppressed-data facility doesn't throw" intent, stricter enforcement. This is an intended refinement, not a defect — score against the refined wording.
+> - **Numeric coercion rejects non-string/non-null inputs** (review CR-01). `nullableNum` accepts only `string | number | null`; a boolean/array/object or a non-numeric string is rejected so malformed CMS data can't be coerced into a fabricated number (rule #4). Empty/whitespace → `null`; `"0"` → `0`.
+> - **DATA-06 is enforced by a runtime test**, not just by the schema happening to parse: `schema.test.ts` iterates `CMSRowSchema.shape` and asserts every depended-on key exists in `provider-686123.json`.
+> - **Scope boundary — what Phase 1 does NOT include:** Phase 1 delivers only the row schema (`CMSRowSchema`) + typed parse helpers (`parseCMSRow` / `safeParseCMSRow`). The raw→view-model normalizer is **RPT-02 (Phase 2)**; the "valid CCN returns zero rows → typed not-found" path is **LOOK-03 / ERR-01 (Phase 3)**. Both are intentionally out of Phase 1 — do not mark Phase 1 incomplete for their absence.
+
 ### Facility Identity
 
 - [ ] **NAME-01**: Report defaults the facility name to the official CMS legal name
@@ -103,7 +109,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DATA-02 | Phase 1 | Complete |
-| DATA-06 | Phase 1 | In progress (fixtures captured in 01-02; schema anchoring completes in 01-03) |
+| DATA-06 | Phase 1 | Complete |
 | DATA-01 | Phase 2 | Pending |
 | DATA-03 | Phase 2 | Pending |
 | DATA-04 | Phase 2 | Pending |
@@ -140,4 +146,4 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 ---
 *Requirements defined: 2026-06-15*
-*Last updated: 2026-06-15 — traceability table populated by roadmapper*
+*Last updated: 2026-06-17 — DATA-02/DATA-06 marked complete; Phase 1 design-decision + scope-boundary note added after phase execution*
