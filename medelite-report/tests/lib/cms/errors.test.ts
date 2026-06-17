@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  CmsApiErrorSchema,
-  CmsError,
-  assertNever,
-} from "@/lib/cms/errors";
+import { CmsApiErrorSchema, CmsError, assertNever } from "@/lib/cms/errors";
 
 // Coverage per CLAUDE.md rule #6: every error path tested.
 // TDD RED: this file is written before errors.ts exists.
