@@ -20,7 +20,7 @@ All v1 requirements below are committed scope for this milestone (required take-
 - [ ] **DATA-03**: Report shows the facility's location, **composed** from `provider_address` + `citytown` + `state` (e.g. `5280 SW 157th Ave, Miami, FL`) — **no ZIP**; the combined `location` field (which includes ZIP) is not reused
 - [ ] **DATA-04**: Report shows the four star ratings — Overall (`overall_rating`), Health Inspection (`health_inspection_rating`), Staffing (`staffing_rating`), and **Quality of Resident Care (`qm_rating`** — NOT `longstay_qm_rating`/`shortstay_qm_rating`)
 - [ ] **DATA-05**: Report shows census capacity (Number of Certified Beds) from CMS
-- [ ] **DATA-06**: Every CMS field used traces to the captured fixture (`provider-686123.json`) or the NH_Data_Dictionary — never a field name from memory
+- [x] **DATA-06**: Every CMS field used traces to the captured fixture (`provider-686123.json`) or the NH_Data_Dictionary — never a field name from memory
 
 ### Facility Identity
 

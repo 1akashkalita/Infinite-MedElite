@@ -13,7 +13,7 @@ Seven phases turn a barebones Next.js scaffold into a deployed, polished nursing
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & CMS Data Layer** - Capture fixture, install packages, build Zod schema + typed CMS pipeline
+- [x] **Phase 1: Foundation & CMS Data Layer** - Capture fixture, install packages, build Zod schema + typed CMS pipeline (completed 2026-06-17)
 - [ ] **Phase 2: API Routes, View Model & Config** - Server route handlers, shared view-model, static header, next.config
 - [ ] **Phase 3: Web UI, Core Flow & Deployment** - CCN search, manual inputs, live preview, error states, first Vercel deploy
 - [ ] **Phase 4: PDF Export** - react-pdf document, server-side PDF route, Download PDF button, Medicare link
@@ -46,7 +46,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03-PLAN.md — Build provider CMSRowSchema + parse module + the DATA-02/DATA-06 test suite (empty→null, real 0, missing-key fail, leading-zero strings)
+- [x] 01-03-PLAN.md — Build provider CMSRowSchema + parse module + the DATA-02/DATA-06 test suite (empty→null, real 0, missing-key fail, leading-zero strings)
 
 ### Phase 2: API Routes, View Model & Config
 
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & CMS Data Layer | 2/3 | In Progress|  |
+| 1. Foundation & CMS Data Layer | 3/3 | Complete   | 2026-06-17 |
 | 2. API Routes, View Model & Config | 0/TBD | Not started | - |
 | 3. Web UI, Core Flow & Deployment | 0/TBD | Not started | - |
 | 4. PDF Export | 0/TBD | Not started | - |
