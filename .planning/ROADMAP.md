@@ -72,7 +72,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Contract foundation: centralized CMS constants (`4pq5-n9py`), the camelCase `FacilityData` type, and the 5-kind error union + `CmsError`/`assertNever`
+- [x] 02-01-PLAN.md — Contract foundation: centralized CMS constants (`4pq5-n9py`), the camelCase `FacilityData` type, and the 5-kind error union + `CmsError`/`assertNever`
 
 **Wave 2** *(parallel; depend on 02-01, zero file overlap)*
 
@@ -175,7 +175,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & CMS Data Layer | 3/3 | Complete   | 2026-06-17 |
-| 2. API Routes, View Model & Config | 0/3 | Not started | - |
+| 2. API Routes, View Model & Config | 1/3 | In progress | - |
 | 3. Web UI, Core Flow & Deployment | 0/TBD | Not started | - |
 | 4. PDF Export | 0/TBD | Not started | - |
 | 5. Claims-Based Metrics | 0/TBD | Not started | - |

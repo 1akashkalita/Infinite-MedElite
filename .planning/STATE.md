@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-06-17T20:26:03.920Z"
-last_activity: 2026-06-17 -- Phase 02 planning complete
+stopped_at: Phase 02 Plan 01 complete
+last_updated: "2026-06-17T21:00:00.000Z"
+last_activity: 2026-06-17 -- Phase 02 Plan 01 (contract foundation) complete
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
-  percent: 14
+  completed_plans: 4
+  percent: 19
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-15)
 
 **Core value:** Enter a CCN → instantly get an accurate, polished, downloadable facility snapshot.
-**Current focus:** Phase 2 — api routes, view model & config
+**Current focus:** Phase 02 — api-routes-view-model-config
 
 ## Current Position
 
-Phase: 2 of 7 (api routes, view model & config)
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-17 -- Phase 02 planning complete
+Phase: 02 (api-routes-view-model-config) — EXECUTING
+Plan: 2 of 3 (02-01 complete)
+Status: Executing Phase 02
+Last activity: 2026-06-17 -- Phase 02 Plan 01 (contract foundation: constants, types, errors) complete
 
-Progress: [██████████] 100%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [██████████] 100%
 
 *Updated after each plan completion*
 | Phase 01 P03 | 4 minutes | 2 tasks | 4 files |
+| Phase 02 P01 | 8 minutes | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,10 @@ Recent decisions affecting current work:
 - D-10 (01-03): CCN and ZIP as z.string() — never coerced; leading zeros preserved
 - D-12 (01-03): Malformed fixtures as inline typed constants in schema.test.ts (avoids JSON type-inference edge case)
 - Vitest alias fix (01-03): Added resolve.alias in vitest.config.ts for @/* → ./src; tsconfig paths not auto-forwarded to Vitest resolver
+- D-14 (02-01): FacilityData is camelCase-only boundary; no snake_case CMS names re-exported from types.ts
+- D-24 (02-01): CMS_BASE_URL, DATASET_PROVIDER_INFO ('4pq5-n9py'), CCN_FILTER_FIELD ('cms_certification_number_ccn') centralized in constants.ts, each traced to fixture (NOT federal_provider_number from ARCHITECTURE.md memory)
+- D-01/D-03 (02-01): 5-kind discriminated union (CmsApiErrorSchema) + assertNever exhaustiveness guard in errors.ts; validation_error carries no extra field (D-05 T-02-LEAK)
+- D-18 (02-01): CmsError class extends Error; Object.setPrototypeOf used for reliable instanceof across transpilation targets
 
 ### Pending Todos
 
@@ -98,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-17T19:52:38.243Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-api-routes-view-model-config/02-CONTEXT.md
+Last session: 2026-06-17T21:00:00.000Z
+Stopped at: Phase 02 Plan 01 complete — contracts (constants.ts, types.ts, errors.ts) committed
+Resume file: .planning/phases/02-api-routes-view-model-config/02-02-PLAN.md
