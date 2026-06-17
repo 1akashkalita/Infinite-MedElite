@@ -106,6 +106,27 @@ describe("CMSRowSchema", () => {
     }
   });
 
+  // CR-01: A non-string/non-null numeric field (boolean, array, object) must be
+  // REJECTED, never silently coerced — Number(true)===1 / Number([])===0 would
+  // fabricate a rating and violate CLAUDE.md rule #4.
+  it("CR-01: rejects non-string, non-null values in a numeric field (no silent coercion)", () => {
+    const base = { ...(suppressedRow as Record<string, unknown>) };
+    for (const bad of [true, false, [] as unknown, {} as unknown]) {
+      const result = CMSRowSchema.safeParse({ ...base, overall_rating: bad });
+      expect(result.success).toBe(false);
+    }
+  });
+
+  // CR-01: A non-numeric string in a numeric field must fail loudly, not become NaN/0.
+  it("CR-01: rejects a non-numeric string in a numeric field", () => {
+    const base = { ...(suppressedRow as Record<string, unknown>) };
+    const result = CMSRowSchema.safeParse({
+      ...base,
+      number_of_certified_beds: "abc",
+    });
+    expect(result.success).toBe(false);
+  });
+
   // DATA-02 / D-10: CCN and ZIP preserve leading zeros as strings (never coerced)
   it("preserves leading zeros in CCN and ZIP as strings", () => {
     const leadingZeroRow: unknown = {

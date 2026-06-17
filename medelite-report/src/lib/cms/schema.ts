@@ -13,13 +13,30 @@
 
 import { z } from "zod";
 
-// Helper: empty/whitespace string → null, then coerce to number.
-// Verified working in zod@4.4.3 (live test 2026-06-16).
-// Behaviors:  ""/"   " → null   |   "0" → 0   |   "5" → 5   |   null → null
-const nullableNum = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() === "" ? null : v),
-  z.coerce.number().nullable(),
-);
+// Helper: validate a CMS numeric field. CMS returns these as strings (often "" when
+// suppressed), as a real number, or null — never as a boolean/array/object.
+// Behaviors:  ""/"   " → null  |  "0" → 0  |  "5" → 5  |  null → null  |  5 → 5
+// A non-numeric string OR any other type (boolean, array, object) is REJECTED, so
+// malformed CMS data can never be silently coerced into a fabricated number
+// (CLAUDE.md rule #4 / review CR-01). z.coerce.number() is intentionally NOT used
+// because Number(true) === 1 and Number([]) === 0 would pass validation.
+const nullableNum = z
+  .union([z.string(), z.number(), z.null()])
+  .transform((v, ctx) => {
+    if (v === null) return null;
+    if (typeof v === "number") return v;
+    const trimmed = v.trim();
+    if (trimmed === "") return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Expected a numeric string, got "${v}"`,
+      });
+      return z.NEVER;
+    }
+    return n;
+  });
 
 export const CMSRowSchema = z
   .object({
