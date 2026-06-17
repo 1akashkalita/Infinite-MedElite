@@ -199,14 +199,32 @@ describe("GET /api/facility", () => {
     expect(body.error).not.toHaveProperty("issues");
   });
 
-  // Lowercase CCN is uppercased before fetch (D-22 normalization)
-  it("uppercases lowercase CCN before passing to fetch", async () => {
-    // This only matters for alphanumeric CCNs; numeric ones are unaffected
-    // Use a CCN that would differ if uppercased (e.g., alphanumeric state codes)
-    // For numeric, just verify it still reaches 200 after uppercasing
-    stubFetchHappy();
-    const req = new NextRequest("http://localhost/api/facility?ccn=686123");
+  // Lowercase alphanumeric CCN is uppercased before reaching fetch (D-22 normalization).
+  // Uses an alphanumeric CCN so .toUpperCase() is NOT a no-op, and captures the actual
+  // condition value sent to fetch — proving normalization rather than just a 200.
+  it("uppercases a lowercase alphanumeric CCN before passing it to fetch", async () => {
+    const capturedUrls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        capturedUrls.push(url);
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ count: 1, results: [providerFixture[0]] }),
+            { status: 200 },
+          ),
+        );
+      }),
+    );
+    const req = new NextRequest("http://localhost/api/facility?ccn=ab1234");
     const resp = await GET(req);
     expect(resp.status).toBe(200);
+
+    expect(capturedUrls.length).toBe(1);
+    const value = new URL(capturedUrls[0]).searchParams.get(
+      "conditions[0][value]",
+    );
+    expect(value).toBe("AB1234");
+    expect(value).not.toBe("ab1234");
   });
 });

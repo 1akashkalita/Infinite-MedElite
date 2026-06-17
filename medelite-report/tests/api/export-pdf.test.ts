@@ -60,6 +60,20 @@ describe("POST /api/export/pdf — invalid body (D-20/D-21)", () => {
     expect(Object.keys(body)).toEqual(["error"]);
     expect(Object.keys(body.error)).toEqual(["kind", "message"]);
   });
+
+  // WR-01: a non-JSON request body throws inside request.json(); the route must catch it
+  // and return the contracted 400 invalid_request, not let a raw SyntaxError become a 500.
+  it("returns 400 invalid_request for a non-JSON body (not a raw 500)", async () => {
+    const req = new Request("http://localhost/api/export/pdf", {
+      method: "POST",
+      body: "this is not json{",
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await POST(req);
+    expect(resp.status).toBe(400);
+    const body = await resp.json();
+    expect(body.error.kind).toBe("invalid_request");
+  });
 });
 
 describe("POST /api/export/pdf — valid ReportViewModel body (D-21)", () => {

@@ -206,4 +206,22 @@ describe("ReportViewModelSchema", () => {
     const result = ReportViewModelSchema.safeParse(badVm);
     expect(result.success).toBe(false);
   });
+
+  // CR-03: z.string().url() alone accepts javascript:/data: URIs (WHATWG parses them).
+  // The hardened refine must reject anything that is not an https://www.medicare.gov URL,
+  // since this model is validated from the client-controlled PDF-export body.
+  it.each([
+    "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "http://www.medicare.gov/care-compare/details/nursing-home/686123", // not https
+    "https://evil.example.com/care-compare/details/nursing-home/686123", // wrong host
+  ])("rejects a non-medicare/non-https careCompareUrl: %s", (badUrl) => {
+    const vm = assembleViewModel(facility, {}, FIXED_DATE_OBJ);
+    const badVm = {
+      ...vm,
+      facility: { ...vm.facility, careCompareUrl: badUrl },
+    };
+    const result = ReportViewModelSchema.safeParse(badVm);
+    expect(result.success).toBe(false);
+  });
 });

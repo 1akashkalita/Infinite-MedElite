@@ -71,6 +71,38 @@ describe("fetchFacility", () => {
     });
   });
 
+  // CR-01: 200 with a non-JSON body (maintenance page, truncated stream) → cms_api_error,
+  // NOT a raw SyntaxError that would escape to a bare 500.
+  it("throws CmsError cms_api_error when CMS returns a 200 with a non-JSON body", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response("<html>maintenance</html>", { status: 200 }),
+        ),
+    );
+    await expect(fetchFacility("686123")).rejects.toMatchObject({
+      kind: "cms_api_error",
+    });
+  });
+
+  // CR-02: 200 with a changed envelope shape (results not an array) → cms_api_error,
+  // NOT a raw TypeError on .length.
+  it("throws CmsError cms_api_error when the CMS envelope shape is wrong", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ count: 1, data: [] }), { status: 200 }),
+        ),
+    );
+    await expect(fetchFacility("686123")).rejects.toMatchObject({
+      kind: "cms_api_error",
+    });
+  });
+
   // D-01: Zero rows → not_found with the CCN in extra
   it("throws CmsError not_found when CMS returns zero results", async () => {
     vi.stubGlobal(

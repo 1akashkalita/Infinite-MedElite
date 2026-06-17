@@ -77,8 +77,30 @@ export const ReportViewModelSchema = z.object({
     certifiedBeds: z.number().nullable(),
     /** CMS data freshness date (processing_date — D-12). */
     processingDate: z.string(),
-    /** Clickable link to the official Medicare Care Compare profile (D-16). */
-    careCompareUrl: z.string().url(),
+    /**
+     * Clickable link to the official Medicare Care Compare profile (D-16).
+     * Hardened: `z.string().url()` alone accepts `javascript:`/`data:` URIs (WHATWG URL
+     * parses them). Since this model is validated from the client-controlled POST body and
+     * Phase 4 renders the link into a PDF, constrain it to an https://www.medicare.gov URL
+     * so a crafted body cannot inject an executable link (defense-in-depth for the PDF route).
+     */
+    careCompareUrl: z
+      .string()
+      .url()
+      .refine(
+        (u) => {
+          try {
+            const parsed = new URL(u);
+            return (
+              parsed.protocol === "https:" &&
+              parsed.hostname === "www.medicare.gov"
+            );
+          } catch {
+            return false;
+          }
+        },
+        { message: "careCompareUrl must be an https://www.medicare.gov URL" },
+      ),
   }),
 
   /** Manual operational inputs that don't live in CMS. */

@@ -19,7 +19,22 @@ export const runtime = "nodejs";
  * Phase 4: swaps the 501 response for renderToBuffer + a real PDF stream.
  */
 export async function POST(request: Request): Promise<Response> {
-  const body: unknown = await request.json();
+  // A non-JSON body throws here; the route contract is 400 invalid_request for bad input,
+  // not a bare 500. Same clean-envelope discipline as the parse-failure branch below.
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      {
+        error: {
+          kind: "invalid_request",
+          message: "Invalid report data.",
+        },
+      },
+      { status: 400 },
+    );
+  }
   const parseResult = ReportViewModelSchema.safeParse(body);
 
   if (!parseResult.success) {

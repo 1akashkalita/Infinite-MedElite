@@ -69,11 +69,33 @@ export async function fetchFacility(ccn: string): Promise<FacilityData> {
     );
   }
 
-  // Parse the JSON response — CMS returns { count, results }
-  const json = (await resp.json()) as { count: number; results: unknown[] };
+  // Parse the JSON response — CMS returns { count, results }.
+  // A 200 with a non-JSON body (maintenance page, truncated stream) throws here; that is a
+  // CMS-side failure, so surface it as cms_api_error rather than letting a raw SyntaxError
+  // escape to a bare 500 (D-18: every failure mode → typed CmsError).
+  let json: { count?: number; results?: unknown };
+  try {
+    json = (await resp.json()) as { count?: number; results?: unknown };
+  } catch {
+    throw new CmsError(
+      "cms_api_error",
+      "CMS returned an error — please try again.",
+    );
+  }
+
+  // Envelope-shape guard: `results` MUST be an array. A type assertion is not a runtime
+  // check, so a changed CMS envelope would otherwise throw a raw TypeError on .length below.
+  // A malformed envelope is a CMS API error (D-18), distinct from a row-level validation_error.
+  if (!Array.isArray(json.results)) {
+    throw new CmsError(
+      "cms_api_error",
+      "CMS returned an error — please try again.",
+    );
+  }
+  const results = json.results;
 
   // Zero rows → not_found (CCN does not exist in the dataset)
-  if (json.results.length === 0) {
+  if (results.length === 0) {
     throw new CmsError(
       "not_found",
       `No facility found for CCN ${ccn}.`,
@@ -82,7 +104,7 @@ export async function fetchFacility(ccn: string): Promise<FacilityData> {
   }
 
   // Zod validate via safeParseCMSRow (CLAUDE.md rule #4: never use unvalidated CMS data)
-  const parseResult = safeParseCMSRow(json.results[0]);
+  const parseResult = safeParseCMSRow(results[0]);
   if (!parseResult.success) {
     // D-06: log server-side only — includes CCN + full prettified Zod issues
     console.error(
