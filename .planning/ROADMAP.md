@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & CMS Data Layer** - Capture fixture, install packages, build Zod schema + typed CMS pipeline (completed 2026-06-17)
 - [ ] **Phase 2: API Routes, View Model & Config** - Server route handlers, shared view-model, static header, next.config
 - [x] **Phase 3: Web UI, Core Flow & Deployment** - CCN search, manual inputs, live preview, error states, first Vercel deploy (completed 2026-06-18)
-- [ ] **Phase 4: PDF Export** - react-pdf document, server-side PDF route, Download PDF button, Medicare link
+- [x] **Phase 4: PDF Export** - react-pdf document, server-side PDF route, Download PDF button, Medicare link (completed 2026-06-18)
 - [ ] **Phase 5: Claims-Based Metrics** - 12 hospitalization/ED data points from CMS, suppressed-value handling, metrics in UI + PDF
 - [ ] **Phase 6: .docx Export** - Word document builder, export route, Download DOCX button
 - [ ] **Phase 7: Visualizations & Polish** - Star rating cards, recharts/react-pdf-charts, live preview debounce, Vercel smoke test
@@ -133,7 +133,7 @@ Plans:
 
 **Wave 2** *(depends on 04-01 — consumes the live PDF route)*
 
-- [ ] 04-02-PLAN.md — Client download UX slice: `DownloadPdfButton` (fetch POST → Blob → silent anchor download, D-07 disabled/"Generating…" states, D-08 inline retry error) wired into the SnapshotApp left pane — closes PDF-01 end-to-end
+- [x] 04-02-PLAN.md — Client download UX slice: `DownloadPdfButton` (fetch POST → Blob → silent anchor download, D-07 disabled/"Generating…" states, D-08 inline retry error) wired into the SnapshotApp left pane — closes PDF-01 end-to-end
 
 ### Phase 5: Claims-Based Metrics
 
@@ -199,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation & CMS Data Layer | 3/3 | Complete   | 2026-06-17 |
 | 2. API Routes, View Model & Config | 3/3 | Complete   | 2026-06-17 |
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
-| 4. PDF Export | 1/2 | In Progress|  |
+| 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 0/TBD | Not started | - |
 | 6. .docx Export | 0/TBD | Not started | - |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
