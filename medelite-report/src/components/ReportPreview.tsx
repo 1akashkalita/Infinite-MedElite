@@ -11,16 +11,24 @@
 //     The formatters use === null (not falsiness), so a real 0 renders "0" (valid data).
 //     Do NOT use || or ! to fall back to "N/A" — use the provided formatter functions.
 //
-//   D-03: Body field order follows the CLAUDE.md field mapping table:
-//     1. Name of Facility (displayName)
-//     2. Location (formatLocation)
-//     3. Census Capacity (formatBeds)
-//     4. Overall Star Rating (formatRating)
-//     5. Health Inspection Rating (formatRating)
-//     6. Staffing Rating (formatRating)
-//     7. Quality of Resident Care (formatRating)
-//     8–13. Manual fields: EMR, Current Census, Type of Patient, Medical Coverage,
-//            Previous Provider Performance, Previous Coverage from Medelite
+//   D-03: Body field order matches the reference report EXACTLY — labels are verbatim from the
+//     reference PDF/DOCX; CMS and manual fields are INTERLEAVED (NOT grouped by source):
+//     1.  Name of Facility (displayName — body only, never in header)
+//     2.  Location (formatLocation — raw CMS pass-through, no ZIP; see README "Data & presentation
+//         decisions" for the address-normalisation decision)
+//     3.  EMR (manual input — em-dash until Wave 4)
+//     4.  Census Capacity (CMS certifiedBeds; null → "N/A", D-10)
+//     5.  Current Census (manual input)
+//     6.  Type of Patient (manual input)
+//     7.  Previous Coverage from Medelite (manual — Yes/No)
+//     8.  Previous Provider Performance from Medelite (manual — INPT-01; label includes
+//         "from Medelite" suffix, verbatim from reference)
+//     9.  Medical Coverage (manual free-text; its own field, NOT part of Medelite History)
+//     10. Overall Star Rating (CMS overall_rating)
+//     11. Health Inspection (CMS health_inspection_rating; label is "Health Inspection", NOT
+//         "Health Inspection Rating" — verbatim from reference)
+//     12. Staffing (CMS staffing_rating; label is "Staffing", NOT "Staffing Rating" — verbatim)
+//     13. Quality of Resident Care (CMS qm_rating, NOT longstay/shortstay qm)
 //
 //   D-06: Shows an animate-pulse skeleton when fetchState is 'idle' or 'loading'.
 //     The skeleton reuses the structure from SnapshotApp's Wave-2 placeholder.
@@ -107,55 +115,23 @@ export function ReportPreview({ vm, fetchState }: Props) {
         <dt className="font-semibold text-zinc-700">Name of Facility</dt>
         <dd className="text-zinc-900">{vm.facility.displayName}</dd>
 
-        {/* 2. Location — composed from address components, no ZIP (DATA-03) */}
+        {/* 2. Location — composed street, city, state; NO ZIP. Raw CMS string,
+            intentionally NOT normalized to the reference's title-case/ordinal
+            presentation (see README "Data & presentation decisions"). */}
         <dt className="font-semibold text-zinc-700">Location</dt>
         <dd className="text-zinc-900">{formatLocation(vm.facility.address)}</dd>
 
-        {/* 3. Census Capacity — certifiedBeds, null → "N/A" (D-10) */}
+        {/* 3. EMR — manual input (em-dash until Wave 4 binds it) */}
+        <dt className="font-semibold text-zinc-700">EMR</dt>
+        <dd className="text-zinc-900">{vm.manual.emr ?? "—"}</dd>
+
+        {/* 4. Census Capacity — CMS certifiedBeds, null → "N/A" (D-10) */}
         <dt className="font-semibold text-zinc-700">Census Capacity</dt>
         <dd className="text-zinc-900">
           {formatBeds(vm.facility.certifiedBeds)}
         </dd>
 
-        {/* Separator */}
-        <dt className="col-span-2 border-t my-1" aria-hidden="true" />
-
-        {/* 4. Overall Star Rating */}
-        <dt className="font-semibold text-zinc-700">Overall Star Rating</dt>
-        <dd className="text-zinc-900">
-          {formatRating(vm.facility.starRatings.overall)}
-        </dd>
-
-        {/* 5. Health Inspection Rating */}
-        <dt className="font-semibold text-zinc-700">
-          Health Inspection Rating
-        </dt>
-        <dd className="text-zinc-900">
-          {formatRating(vm.facility.starRatings.healthInspection)}
-        </dd>
-
-        {/* 6. Staffing Rating */}
-        <dt className="font-semibold text-zinc-700">Staffing Rating</dt>
-        <dd className="text-zinc-900">
-          {formatRating(vm.facility.starRatings.staffing)}
-        </dd>
-
-        {/* 7. Quality of Resident Care — qm_rating (D-16, NOT longstay_qm_rating) */}
-        <dt className="font-semibold text-zinc-700">
-          Quality of Resident Care
-        </dt>
-        <dd className="text-zinc-900">
-          {formatRating(vm.facility.starRatings.qualityCare)}
-        </dd>
-
-        {/* Separator */}
-        <dt className="col-span-2 border-t my-1" aria-hidden="true" />
-
-        {/* 8. EMR — manual input (Wave 4 wires the input; em-dash fallback for now) */}
-        <dt className="font-semibold text-zinc-700">EMR</dt>
-        <dd className="text-zinc-900">{vm.manual.emr ?? "—"}</dd>
-
-        {/* 9. Current Census — manual input */}
+        {/* 5. Current Census — manual input */}
         <dt className="font-semibold text-zinc-700">Current Census</dt>
         <dd className="text-zinc-900">
           {vm.manual.currentCensus != null
@@ -163,27 +139,53 @@ export function ReportPreview({ vm, fetchState }: Props) {
             : "—"}
         </dd>
 
-        {/* 10. Type of Patient — manual input */}
+        {/* 6. Type of Patient — manual input */}
         <dt className="font-semibold text-zinc-700">Type of Patient</dt>
         <dd className="text-zinc-900">{vm.manual.typeOfPatient ?? "—"}</dd>
 
-        {/* 11. Medical Coverage — its own free-text field (not part of Medelite History) */}
-        <dt className="font-semibold text-zinc-700">Medical Coverage</dt>
-        <dd className="text-zinc-900">{vm.manual.medicalCoverage ?? "—"}</dd>
-
-        {/* 12. Previous Provider Performance — manual input (INPT-01) */}
+        {/* 7. Previous Coverage from Medelite — Yes/No (manual) */}
         <dt className="font-semibold text-zinc-700">
-          Previous Provider Performance
+          Previous Coverage from Medelite
+        </dt>
+        <dd className="text-zinc-900">{vm.manual.previousCoverage ?? "—"}</dd>
+
+        {/* 8. Previous Provider Performance from Medelite — manual input (INPT-01) */}
+        <dt className="font-semibold text-zinc-700">
+          Previous Provider Performance from Medelite
         </dt>
         <dd className="text-zinc-900">
           {vm.manual.previousProviderPerformance ?? "—"}
         </dd>
 
-        {/* 13. Previous Coverage from Medelite — Yes/No (manual) */}
+        {/* 9. Medical Coverage — its own free-text field (not part of Medelite History) */}
+        <dt className="font-semibold text-zinc-700">Medical Coverage</dt>
+        <dd className="text-zinc-900">{vm.manual.medicalCoverage ?? "—"}</dd>
+
+        {/* 10. Overall Star Rating — CMS overall_rating */}
+        <dt className="font-semibold text-zinc-700">Overall Star Rating</dt>
+        <dd className="text-zinc-900">
+          {formatRating(vm.facility.starRatings.overall)}
+        </dd>
+
+        {/* 11. Health Inspection — CMS health_inspection_rating */}
+        <dt className="font-semibold text-zinc-700">Health Inspection</dt>
+        <dd className="text-zinc-900">
+          {formatRating(vm.facility.starRatings.healthInspection)}
+        </dd>
+
+        {/* 12. Staffing — CMS staffing_rating */}
+        <dt className="font-semibold text-zinc-700">Staffing</dt>
+        <dd className="text-zinc-900">
+          {formatRating(vm.facility.starRatings.staffing)}
+        </dd>
+
+        {/* 13. Quality of Resident Care — CMS qm_rating (NOT longstay/shortstay qm) */}
         <dt className="font-semibold text-zinc-700">
-          Previous Coverage from Medelite
+          Quality of Resident Care
         </dt>
-        <dd className="text-zinc-900">{vm.manual.previousCoverage ?? "—"}</dd>
+        <dd className="text-zinc-900">
+          {formatRating(vm.facility.starRatings.qualityCare)}
+        </dd>
       </dl>
 
       {/* CMS data freshness note */}

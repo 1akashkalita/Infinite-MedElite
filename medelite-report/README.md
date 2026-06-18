@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Infinite Snapshot
+
+Infinite Snapshot is a lightweight web app that turns a single facility identifier into a polished, downloadable assessment report. Enter a nursing home's CCN (CMS Certification Number); the app pulls public CMS Care Compare data (location, star ratings, metadata, and claims-based hospitalization/ED measures), combines it with manual operational inputs, lets you preview the result live, and exports a clean, print-ready PDF and `.docx` with a clickable link back to the official Medicare Care Compare profile.
+
+Built for Medelite as a take-home internship project. Deployed at: **https://infinite-snapshot.vercel.app**
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cd medelite-report
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Quality gate** (run before every commit):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run verify        # typecheck → lint → format:check → test
+npm run verify:full   # verify + next build
+```
 
-## Learn More
+## Data & presentation decisions
 
-To learn more about Next.js, take a look at the following resources:
+### Reference governs layout/labels; live CMS API governs values
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The Kendall Lakes reference report (PDF/DOCX) defines the body field **order** and **label strings** (verbatim). It does **not** define the data — its 120 beds / "5280 SW 157th Ave" are illustrative. Real values come from the live CMS Provider Data Catalog API and the captured fixture for CCN 686123 (e.g. 150 certified beds). Do not "correct" live values to match the reference PDF.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Address formatting: raw CMS pass-through (decision)
 
-## Deploy on Vercel
+The reference renders "5280 SW 157th Ave, Miami, FL" (title case, ordinal suffix, abbreviated street type). The CMS API returns `provider_address = "5280 SW 157 AVENUE"`, `citytown = "MIAMI"`, `state = "FL"`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+We **display the composed CMS string verbatim**: `"5280 SW 157 AVENUE, MIAMI, FL"` (street + city + state, no ZIP) and intentionally do **not** normalize to the reference's title-case / ordinal ("157" → "157th") / abbreviation ("AVENUE" → "Ave").
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Rationale:** The address is a value (governed by the API, not the reference layout), and reconstructing the reference's presentation from raw CMS strings is lossy and risks corrupting regulated source data (CLAUDE.md data-integrity rule #3). This decision is reversible if a normalized presentation is later preferred.
