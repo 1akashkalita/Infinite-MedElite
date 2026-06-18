@@ -135,6 +135,17 @@ No new threat surface beyond what the plan's threat model covers:
 - Phase 04-02 (DownloadPdfButton) can wire the client-side fetch → blob → anchor download (D-05) against the live endpoint
 - `vercel:full` confirmed clean: no client bundle leak of `@react-pdf/renderer`
 
+## Self-Check: PASSED
+
+- [x] `medelite-report/src/lib/report/slug.ts` — FOUND
+- [x] `medelite-report/tests/lib/slug.test.ts` — FOUND
+- [x] `medelite-report/src/components/pdf/ReportPDF.tsx` — FOUND
+- [x] `medelite-report/src/app/api/export/pdf/route.tsx` — FOUND
+- [x] `.planning/phases/04-pdf-export/04-01-SUMMARY.md` — FOUND
+- [x] Commit `5c56cc3` (Task 1: slug helper + RED tests) — FOUND
+- [x] Commit `4735a10` (Task 2: ReportPDF component) — FOUND
+- [x] Commit `3b79119` (Task 3: renderToBuffer swap) — FOUND
+
 ---
 *Phase: 04-pdf-export*
 *Completed: 2026-06-18*
