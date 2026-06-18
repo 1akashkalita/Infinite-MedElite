@@ -28,7 +28,7 @@
 import { useState, useCallback } from "react";
 import type { FacilityData } from "@/lib/cms/types";
 import type { CmsApiError } from "@/lib/cms/errors";
-import { assertNever } from "@/lib/cms/errors";
+import { CmsApiErrorSchema } from "@/lib/cms/errors";
 import type { ManualInputs } from "@/lib/report/view-model";
 import { assembleViewModel } from "@/lib/report/view-model";
 import { getErrorPresentation } from "@/lib/ui/error-presentation";
@@ -39,30 +39,6 @@ import { ReportPreview } from "@/components/ReportPreview";
 
 // FetchState drives both the skeleton and the button disabled state
 type FetchState = "idle" | "loading" | "success" | "error";
-
-/**
- * Determines whether an error kind maps to a banner (vs inline) placement.
- *
- * This is an exhaustive switch — any new CmsApiError kind added without a case
- * here causes a TypeScript compile error via assertNever(kind) (D-09/ERR-02).
- *
- * Mirror of getErrorPresentation(error).placement; kept local to SnapshotApp so
- * the rendering logic is explicit without calling getErrorPresentation twice.
- */
-function isBannerError(kind: CmsApiError["kind"]): boolean {
-  switch (kind) {
-    case "network_error":
-    case "cms_api_error":
-    case "validation_error":
-      return true;
-    case "invalid_ccn":
-    case "not_found":
-      return false;
-    default:
-      // Pitfall 4: pass the discriminant (not the full error object)
-      return assertNever(kind);
-  }
-}
 
 /**
  * SnapshotApp — Root client component.
@@ -87,18 +63,41 @@ export function SnapshotApp() {
     try {
       // 2. Call /api/facility — server-side route handles CMS fetch + Zod validation
       const res = await fetch(`/api/facility?ccn=${encodeURIComponent(ccn)}`);
-      const json = (await res.json()) as
-        | { data: FacilityData }
-        | { error: CmsApiError };
+      // WR-02: check res.ok before trusting json shape; a non-ok + unexpected body
+      // would push undefined into errorState and crash getErrorPresentation (ERR-03).
+      const json = (await res.json()) as unknown;
 
-      if ("data" in json) {
+      if (
+        json !== null &&
+        typeof json === "object" &&
+        "data" in (json as Record<string, unknown>)
+      ) {
         // 3a. Success
-        setFacilityData(json.data);
+        setFacilityData((json as { data: FacilityData }).data);
         setManualInputs({}); // D-11: reset ONLY on successful fetch
         setFetchState("success");
+      } else if (
+        json !== null &&
+        typeof json === "object" &&
+        "error" in (json as Record<string, unknown>)
+      ) {
+        // 3b. API-level error — validate shape before trusting it (WR-02)
+        const parsed = CmsApiErrorSchema.safeParse(
+          (json as Record<string, unknown>).error,
+        );
+        setErrorState(
+          parsed.success
+            ? parsed.data
+            : { kind: "cms_api_error", message: "Unexpected error response." },
+        );
+        setFacilityData(null);
+        setFetchState("error");
       } else {
-        // 3b. API-level error (invalid_ccn, not_found, cms_api_error, validation_error)
-        setErrorState(json.error);
+        // 3b'. Unexpected envelope (proxy/CDN error, shape drift) — never push undefined
+        setErrorState({
+          kind: "cms_api_error",
+          message: "Unexpected response from server.",
+        });
         setFacilityData(null);
         setFetchState("error");
       }
@@ -122,15 +121,14 @@ export function SnapshotApp() {
     : null;
 
   // ── Error routing ──────────────────────────────────────────────────────────
-  // D-07: split error kinds into banner vs inline
+  // D-07: split error kinds into banner vs inline.
+  // WR-03: getErrorPresentation is the single source of truth for placement —
+  // the former local isBannerError mirror has been removed to prevent divergence.
   const placement = errorState
     ? getErrorPresentation(errorState).placement
     : null;
-  const bannerError =
-    errorState && (placement === "banner" || isBannerError(errorState.kind))
-      ? errorState
-      : null;
-  const inlineError = errorState && placement === "inline" ? errorState : null;
+  const bannerError = placement === "banner" ? errorState : null;
+  const inlineError = placement === "inline" ? errorState : null;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -149,10 +147,12 @@ export function SnapshotApp() {
         {bannerError && <ErrorBanner error={bannerError} />}
 
         {/* CCN search form — inline errors routed through inlineError prop */}
+        {/* WR-01: onInputChange clears stale server inline error (e.g. not_found) when user edits CCN */}
         <CCNSearchBar
           onSearch={handleSearch}
           loading={fetchState === "loading"}
           inlineError={inlineError}
+          onInputChange={() => setErrorState(null)}
         />
 
         {/* ManualInputsForm — binds all six manual fields + name override (D-11/D-12/PREV-01) */}

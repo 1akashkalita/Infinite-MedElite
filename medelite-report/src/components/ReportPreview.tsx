@@ -35,7 +35,12 @@
 //
 //   No assembleViewModel call here — the parent passes the assembled vm (RPT-02).
 
-import { formatRating, formatBeds, formatLocation } from "@/lib/report/format";
+import {
+  formatRating,
+  formatBeds,
+  formatLocation,
+  formatDate,
+} from "@/lib/report/format";
 import type { ReportViewModel } from "@/lib/report/view-model";
 
 interface Props {
@@ -188,9 +193,9 @@ export function ReportPreview({ vm, fetchState }: Props) {
         </dd>
       </dl>
 
-      {/* CMS data freshness note */}
+      {/* CMS data freshness note — formatDate applies UTC timezone to avoid midnight off-by-one (D-13) */}
       <footer className="border-t pt-3 text-xs text-zinc-400 text-right">
-        CMS processing date: {vm.facility.processingDate}
+        CMS processing date: {formatDate(vm.facility.processingDate)}
       </footer>
     </article>
   );

@@ -31,6 +31,12 @@ interface Props {
    * Banner-kind errors are rendered by ErrorBanner, not here.
    */
   inlineError: CmsApiError | null;
+  /**
+   * Optional callback invoked on every CCN input change.
+   * WR-01: lets the parent clear a stale server inline error (e.g. not_found)
+   * when the user edits the CCN, so the message doesn't reference an old CCN.
+   */
+  onInputChange?: () => void;
 }
 
 /**
@@ -44,7 +50,12 @@ interface Props {
  *   loading  — disables the button during a pending fetch
  *   inlineError — parent-managed server error for inline display
  */
-export function CCNSearchBar({ onSearch, loading, inlineError }: Props) {
+export function CCNSearchBar({
+  onSearch,
+  loading,
+  inlineError,
+  onInputChange,
+}: Props) {
   const [ccn, setCcn] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -84,6 +95,7 @@ export function CCNSearchBar({ onSearch, loading, inlineError }: Props) {
           onChange={(e) => {
             setCcn(e.target.value);
             setLocalError(null); // clear local error on any keystroke
+            onInputChange?.(); // WR-01: let parent clear stale server inline error
           }}
           placeholder="Enter CCN (e.g. 686123)"
           maxLength={10}

@@ -176,6 +176,40 @@ describe("assembleViewModel — manual inputs", () => {
     expect(vm.manual.previousProviderPerformance).toBe("Strong outcomes");
   });
 
+  // CR-01 regression: currentCensus = 0 must survive the model unchanged and render "0",
+  // not be collapsed to null / "—" by a falsiness gate (D-10 / CLAUDE.md standing rule).
+  it("CR-01: currentCensus = 0 is preserved as 0, not coerced to null (D-10 footgun)", () => {
+    const vm = assembleViewModel(
+      facility,
+      { currentCensus: 0 },
+      FIXED_DATE_OBJ,
+    );
+    // The view-model must carry 0, not null
+    expect(vm.manual.currentCensus).toBe(0);
+    expect(vm.manual.currentCensus).not.toBeNull();
+    // The schema must accept 0 as a valid census value
+    const result = ReportViewModelSchema.safeParse(vm);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.manual.currentCensus).toBe(0);
+    }
+  });
+
+  it("CR-01: currentCensus = 0 renders as '0', not '—' (ReportPreview render path)", () => {
+    // Simulates what ReportPreview.tsx line 137-139 does:
+    //   vm.manual.currentCensus != null ? String(vm.manual.currentCensus) : "—"
+    // With currentCensus = 0, the != null check is true (0 != null), so it renders "0".
+    const vm = assembleViewModel(
+      facility,
+      { currentCensus: 0 },
+      FIXED_DATE_OBJ,
+    );
+    const rendered =
+      vm.manual.currentCensus != null ? String(vm.manual.currentCensus) : "—";
+    expect(rendered).toBe("0");
+    expect(rendered).not.toBe("—");
+  });
+
   it("previousProviderPerformance round-trips through ReportViewModelSchema (INPT-01)", () => {
     const vm = assembleViewModel(
       facility,

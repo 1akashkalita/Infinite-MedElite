@@ -13,8 +13,8 @@
 //   Merge-update: each onChange calls onChange({ ...inputs, <field>: value }) so one field
 //                 never clobbers another.
 //   T-03-10: All values rendered via React JSX (auto-escaped); no dangerouslySetInnerHTML.
-//   T-03-11: currentCensus uses e.target.valueAsNumber || null — non-numeric entry resolves
-//            to null rather than NaN propagating into the model.
+//   T-03-11: currentCensus uses Number.isNaN(e.target.valueAsNumber) guard — non-numeric
+//            entry resolves to null rather than NaN. Do NOT use || null (collapses real 0).
 
 import type { ManualInputs } from "@/lib/report/view-model";
 
@@ -96,12 +96,15 @@ export function ManualInputsForm({ inputs, onChange, disabled }: Props) {
           id="mi-currentCensus"
           type="number"
           value={inputs.currentCensus ?? ""}
-          onChange={(e) =>
+          onChange={(e) => {
+            const n = e.target.valueAsNumber;
+            // valueAsNumber returns NaN for empty/non-numeric input — guard NaN only.
+            // Do NOT use || null: that would collapse a real 0 to null (D-10 / CR-01).
             onChange({
               ...inputs,
-              currentCensus: e.target.valueAsNumber || null,
-            })
-          }
+              currentCensus: Number.isNaN(n) ? null : n,
+            });
+          }}
           disabled={disabled}
           placeholder="e.g. 130"
           min={0}
