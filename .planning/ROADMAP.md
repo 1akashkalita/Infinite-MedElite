@@ -125,8 +125,15 @@ Plans:
   4. PDF content matches the live web preview for the same inputs (same name, same data, same manual fields)
   5. `npm run verify:full` is green; the PDF route handler test asserts: buffer returned, correct `Content-Type`, correct `Content-Disposition`, and the Medicare URL appears in the buffer
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Server render core: pure `slugFilename` helper (+ Wave 0 slug.test.ts), `ReportPDF` react-pdf document mirroring ReportPreview 1:1 with the clickable Medicare link, and the route swap from the 501 stub to real `renderToBuffer` (+ extended export-pdf.test.ts) — delivers PDF-02/PDF-03 and the server half of PDF-01
+
+**Wave 2** *(depends on 04-01 — consumes the live PDF route)*
+
+- [ ] 04-02-PLAN.md — Client download UX slice: `DownloadPdfButton` (fetch POST → Blob → silent anchor download, D-07 disabled/"Generating…" states, D-08 inline retry error) wired into the SnapshotApp left pane — closes PDF-01 end-to-end
 
 ### Phase 5: Claims-Based Metrics
 
@@ -192,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation & CMS Data Layer | 3/3 | Complete   | 2026-06-17 |
 | 2. API Routes, View Model & Config | 3/3 | Complete   | 2026-06-17 |
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
-| 4. PDF Export | 0/TBD | Not started | - |
+| 4. PDF Export | 0/2 | Not started | - |
 | 5. Claims-Based Metrics | 0/TBD | Not started | - |
 | 6. .docx Export | 0/TBD | Not started | - |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
