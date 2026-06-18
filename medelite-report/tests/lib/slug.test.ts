@@ -38,4 +38,21 @@ describe("slugFilename", () => {
     expect(result).not.toContain("\\");
     expect(result).not.toContain(" ");
   });
+
+  it("CR-01: header-injection chars in the CCN fallback are stripped", () => {
+    // displayName slugs to empty → CCN fallback path. CCN is client-controlled
+    // (POST body validates only z.string()) and flows into Content-Disposition.
+    const result = slugFilename("###", '686123"\r\nSet-Cookie: x=y');
+    expect(result).not.toContain('"');
+    expect(result).not.toContain("\r");
+    expect(result).not.toContain("\n");
+    expect(result).not.toContain(" ");
+    expect(result).not.toContain(":");
+    // Alphanumerics survive; every separator/control char is dropped.
+    expect(result).toBe("686123SetCookiexy-Snapshot.pdf");
+  });
+
+  it("CR-01: an all-unsafe CCN fallback yields a safe constant filename", () => {
+    expect(slugFilename("", '"\r\n/\\')).toBe("facility-Snapshot.pdf");
+  });
 });

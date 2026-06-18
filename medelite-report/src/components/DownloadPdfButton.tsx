@@ -65,7 +65,10 @@ export function DownloadPdfButton({ vm }: Props) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // WR-02: revoke on a later task, not this synchronous frame. Some WebKit/mobile
+      // engines abort an in-flight blob download if its object URL is revoked before the
+      // click has committed. Deferring keeps the URL alive long enough to start the save.
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch {
       // D-08: surface a fixed UI-authored string; never the raw server response or Zod internals.
       // Keep button enabled for retry (loading will be cleared in finally).
