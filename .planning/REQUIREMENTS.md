@@ -10,8 +10,8 @@ All v1 requirements below are committed scope for this milestone (required take-
 ### CCN Lookup
 
 - [ ] **LOOK-01**: User can enter a CCN in an input box and submit it to fetch that facility's data
-- [ ] **LOOK-02**: App validates CCN format (6-character, treated as a string with leading zeros preserved) and shows a clear inline error for malformed input before any fetch
-- [ ] **LOOK-03**: App distinguishes "invalid format" from "facility not found" (valid format but zero CMS results) with distinct, user-friendly messaging
+- [x] **LOOK-02**: App validates CCN format (6-character, treated as a string with leading zeros preserved) and shows a clear inline error for malformed input before any fetch
+- [x] **LOOK-03**: App distinguishes "invalid format" from "facility not found" (valid format but zero CMS results) with distinct, user-friendly messaging
 
 ### CMS Data Engine
 
@@ -35,7 +35,7 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 ### Manual Operational Inputs
 
-- [ ] **INPT-01**: User can enter all of: EMR, Current Census, Type of Patient, **Medical Coverage** (free text, e.g. "Optometry, PCP, Podiatry" — a distinct field, not folded into "Medelite History"), and Previous Provider Performance
+- [x] **INPT-01**: User can enter all of: EMR, Current Census, Type of Patient, **Medical Coverage** (free text, e.g. "Optometry, PCP, Podiatry" — a distinct field, not folded into "Medelite History"), and Previous Provider Performance
 - [ ] **INPT-02**: User can set "Previous Coverage from Medelite" via a Yes/No control
 - [ ] **INPT-03**: Manual inputs appear in the report body alongside the CMS data
 
@@ -71,8 +71,8 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 ### Error Handling (bonus, cross-cutting)
 
-- [ ] **ERR-01**: Invalid CCN, facility-not-found, network/API failure, and missing/partial CMS fields each produce a distinct, clean user-facing state
-- [ ] **ERR-02**: Every error path is covered by tests
+- [x] **ERR-01**: Invalid CCN, facility-not-found, network/API failure, and missing/partial CMS fields each produce a distinct, clean user-facing state
+- [x] **ERR-02**: Every error path is covered by tests
 
 ### Deployment
 
@@ -119,14 +119,14 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RPT-01 | Phase 2 | Pending |
 | RPT-02 | Phase 2 | Pending |
 | LOOK-01 | Phase 3 | Pending |
-| LOOK-02 | Phase 3 | Pending |
-| LOOK-03 | Phase 3 | Pending |
-| INPT-01 | Phase 3 | Pending |
+| LOOK-02 | Phase 3 | Complete |
+| LOOK-03 | Phase 3 | Complete |
+| INPT-01 | Phase 3 | Complete |
 | INPT-02 | Phase 3 | Pending |
 | INPT-03 | Phase 3 | Pending |
 | PREV-01 | Phase 3 | Pending |
-| ERR-01 | Phase 3 | Pending |
-| ERR-02 | Phase 3 | Pending |
+| ERR-01 | Phase 3 | Complete |
+| ERR-02 | Phase 3 | Complete |
 | DEP-01 | Phase 3 | Pending |
 | DEP-02 | Phase 3 | Pending |
 | PDF-01 | Phase 4 | Pending |

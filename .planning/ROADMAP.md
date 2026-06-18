@@ -97,7 +97,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Foundation: extend `ManualInputs`/`ReportViewModelSchema` with `previousProviderPerformance` (INPT-01) + the pure `src/lib/ui/` CCN pre-check and exhaustive error-kind mapping modules + their tests (LOOK-02/03, ERR-01/02)
+- [x] 03-01-PLAN.md — Foundation: extend `ManualInputs`/`ReportViewModelSchema` with `previousProviderPerformance` (INPT-01) + the pure `src/lib/ui/` CCN pre-check and exhaustive error-kind mapping modules + their tests (LOOK-02/03, ERR-01/02)
 
 **Wave 2** *(skeleton-first early deploy; depends on 03-01)*
 
@@ -191,7 +191,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Foundation & CMS Data Layer | 3/3 | Complete   | 2026-06-17 |
 | 2. API Routes, View Model & Config | 3/3 | Complete   | 2026-06-17 |
-| 3. Web UI, Core Flow & Deployment | 0/4 | Planned | - |
+| 3. Web UI, Core Flow & Deployment | 1/4 | In Progress|  |
 | 4. PDF Export | 0/TBD | Not started | - |
 | 5. Claims-Based Metrics | 0/TBD | Not started | - |
 | 6. .docx Export | 0/TBD | Not started | - |
