@@ -603,17 +603,17 @@ The fetch → Blob → URL.createObjectURL → anchor pattern is correct. Key co
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`fontWeight: 'bold'` vs `fontFamily: 'Helvetica-Bold'` in StyleSheet**
    - What we know: Both routes work in react-pdf — `fontWeight` triggers font family resolution; explicit name is unambiguous.
    - What's unclear: Whether the `fontWeight: 'bold'` resolution path works reliably in v4 with built-in fonts.
-   - Recommendation: Use explicit `fontFamily: 'Helvetica-Bold'` for bold labels to avoid any resolution ambiguity. This is unambiguously safe.
+   - RESOLVED: Use explicit `fontFamily: 'Helvetica-Bold'` for bold labels to avoid any resolution ambiguity. This is unambiguously safe and is what plan 04-01 Task 2 implements.
 
 2. **Content-Disposition: inline filename encoding for non-ASCII facility names**
    - What we know: The slug function strips all non-ASCII. CCN is always ASCII.
    - What's unclear: Whether any facility name passed through the slug could produce a filename that needs `filename*=UTF-8''...` RFC 5987 encoding.
-   - Recommendation: Not an issue — the slug function converts all non-alphanumeric to hyphens, guaranteeing ASCII-only output. No RFC 5987 encoding needed.
+   - RESOLVED: Not an issue — the slug function (D-06, plan 04-01 Task 1) converts all non-alphanumeric to hyphens, guaranteeing ASCII-only output. No RFC 5987 encoding needed.
 
 ---
 
