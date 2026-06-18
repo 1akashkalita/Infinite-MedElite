@@ -19,7 +19,19 @@ findings:
   warning: 4
   info: 3
   total: 8
-status: issues_found
+status: resolved
+fixed_at: 2026-06-17T00:00:00Z
+fixed_commit: 65d7d2b
+fixed_findings:
+  - CR-01
+  - WR-01
+  - WR-02
+  - WR-03
+  - WR-04
+skipped_findings:
+  - IN-01  # harmless redundant disabled props on fieldset children
+  - IN-02  # maxLength=10 magic number — not a bug, gate still rejects
+  - IN-03  # vm memoization — performance concern, out of v1 scope
 ---
 
 # Phase 3: Code Review Report
