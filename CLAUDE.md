@@ -76,11 +76,11 @@ regeneration. GSD project planning artifacts live in `.planning/`.
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
-**Infinite Snapshot**
+**Infinite**
 
-Infinite Snapshot is a lightweight web app that turns a single facility identifier into a polished, downloadable assessment report. A user enters a nursing home's CCN (CMS Certification Number); the app instantly pulls public CMS Care Compare data (location, star ratings, metadata, and claims-based hospitalization/ED measures), combines it with manual operational inputs that don't live in CMS, lets the user preview the result live, and exports a clean, print-ready PDF (and .docx) with a clickable link back to the official Medicare Care Compare profile.
+Infinite is a lightweight web app that turns a single facility identifier into a polished, downloadable assessment report. A user enters a nursing home's CCN (CMS Certification Number); the app instantly pulls public CMS Care Compare data (location, star ratings, metadata, and claims-based hospitalization/ED measures), combines it with manual operational inputs that don't live in CMS, lets the user preview the result live, and exports a clean, print-ready PDF (and .docx) with a clickable link back to the official Medicare Care Compare profile.
 
-It is being built as a take-home internship project for Medelite, so the bar is not "works" — it is "fully shipped, deployed live, and clearly above expectations." The product is named **Infinite Snapshot** (app/repo/page title); the in-report header branding stays locked to the static `INFINITE — Managed by MEDELITE` / `FACILITY ASSESSMENT SNAPSHOT` block.
+It is being built as a take-home internship project for Medelite, so the bar is not "works" — it is "fully shipped, deployed live, and clearly above expectations." The product is named **Infinite** (app/page title); the in-report header branding stays locked to the static `INFINITE — Managed by MEDELITE` / `FACILITY ASSESSMENT SNAPSHOT` block.
 
 **Core Value:** Enter a CCN → instantly get an accurate, polished, downloadable facility snapshot. If everything else fails, that one flow — lookup, combine, export — must work flawlessly.
 

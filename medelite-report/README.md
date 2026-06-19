@@ -1,6 +1,6 @@
-# Infinite Snapshot
+# Infinite
 
-Infinite Snapshot is a lightweight web app that turns a single facility identifier into a polished, downloadable assessment report. Enter a nursing home's CCN (CMS Certification Number); the app pulls public CMS Care Compare data (location, star ratings, metadata, and claims-based hospitalization/ED measures), combines it with manual operational inputs, lets you preview the result live, and exports a clean, print-ready PDF and `.docx` with a clickable link back to the official Medicare Care Compare profile.
+Infinite is a lightweight web app that turns a single facility identifier into a polished, downloadable assessment report. Enter a nursing home's CCN (CMS Certification Number); the app pulls public CMS Care Compare data (location, star ratings, metadata, and claims-based hospitalization/ED measures), combines it with manual operational inputs, lets you preview the result live, and exports a clean, print-ready PDF and `.docx` with a clickable link back to the official Medicare Care Compare profile.
 
 Built for Medelite as a take-home internship project. Deployed at: **https://infinite-snapshot.vercel.app**
 
