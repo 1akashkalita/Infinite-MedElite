@@ -163,7 +163,7 @@ Plans:
 
 **Wave 2** *(depends on 05-01)*
 
-- [ ] 05-02-PLAN.md — Join + fetch: HospMetric type + joinClaimsAndAverages mapper (12 verbatim rows, per-row suppression) + fetchClaimsMeasures/fetchAverages
+- [x] 05-02-PLAN.md — Join + fetch: HospMetric type + joinClaimsAndAverages mapper (12 verbatim rows, per-row suppression) + fetchClaimsMeasures/fetchAverages
 
 **Wave 3** *(depends on 05-02)*
 
@@ -217,6 +217,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. API Routes, View Model & Config | 3/3 | Complete   | 2026-06-17 |
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
-| 5. Claims-Based Metrics | 1/4 | In Progress|  |
+| 5. Claims-Based Metrics | 2/4 | In Progress|  |
 | 6. .docx Export | 0/TBD | Not started | - |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
