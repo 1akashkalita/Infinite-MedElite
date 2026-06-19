@@ -630,21 +630,22 @@ const METRIC_DEFINITIONS = [
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Partial claims response (1-3 of 4 measures returned) — render partial or degrade?**
    - What we know: D-10 says "always render all 12 rows" (when the fetch succeeded). D-09 says "whole-section failure → one line."
    - What's unclear: If CMS returns only 3 of 4 measures (a real data gap, not a suppressed score), is that a "fetch succeeded" (D-10 applies, render partial) or a "fetch failure" (D-09 applies, show one line)?
-   - Recommendation: Treat fewer-than-4 measures as whole-section degradation for simplicity. Render all 12 rows only if all 4 measure codes (521, 522, 551, 552) are present. Otherwise, render the D-09 one-line message. This keeps the UI predictable and avoids gaps in the flat label list.
+   - ~~Recommendation: Treat fewer-than-4 measures as whole-section degradation for simplicity.~~ **SUPERSEDED — this recommendation contradicted the locked decisions and is rejected.**
+   - **RESOLVED (per CONTEXT.md D-10 + ROADMAP success-criterion #5 "graceful partial data, no throws"):** Fewer-than-4 measures is the **D-10 partial-render case, NOT a D-09 whole-section degrade.** When BOTH the claims and averages fetches *succeed* (fulfilled), the mapper renders ALL 12 fixed rows: any absent facility measure (a missing measure_code) shows the footnote-aware suppression text in just that facility row (treated like a suppressed score — generic fallback message), while its national/state average rows STILL render their values (averages come from `xcdc-v8bm` independently). D-09's single "temporarily unavailable" line is reserved for an actual **fetch failure** (claims OR averages promise rejected at the route level via `Promise.allSettled`). The mapper therefore returns the 12-row `HospMetric[]` whenever it is given usable averages rows; the whole-section degrade decision lives in the route (Plan 03), keyed on `Promise.allSettled` rejection — not on a partial claims count.
 
 2. **averages Zod schema strictness — typed named columns or passthrough?**
    - What we know: The two rate columns have stable full names; the two percentage columns have unstable hash suffixes.
    - What's unclear: Whether to explicitly declare the two stable columns in `AveragesRowSchema` and use passthrough for the truncated ones.
-   - Recommendation: Use `.passthrough()` for the entire schema. The mapper does a runtime key scan by description substring. This is marginally less type-safe but is robust to any future column name changes.
+   - **RESOLVED:** Use `.passthrough()` for the entire `AveragesRowSchema` (typing only `state_or_nation` + `processing_date`); the mapper does a runtime key scan by description substring (D-14). Marginally less type-safe but robust to column-name rotation. (Implemented in Plan 01 T1 + Plan 02 T1.)
 
 3. **Where to put `formatFootnote` — `format.ts` or a new `claims-format.ts`?**
    - What we know: `format.ts` already has `formatPercent`/`formatRate` which Phase 5 reuses.
-   - Recommendation: Add `formatFootnote` to the existing `format.ts`. It is a render-time formatter with the same null-safe semantics. No need for a new file.
+   - **RESOLVED:** Add `formatFootnote` to the existing `format.ts` — a render-time formatter with the same null-safe semantics; no new file. (Implemented in Plan 01 T2.)
 
 ---
 
