@@ -18,15 +18,16 @@
 // State cascade per search:
 //   1. setFetchState('loading'), setErrorState(null)  ← clear stale state (Pitfall 3)
 //   2. fetch /api/facility?ccn=<normalized>
-//   3a. Success: setFacilityData(json.data), setManualInputs({}), setFetchState('success')
-//   3b. API error: setErrorState(json.error), setFacilityData(null), setFetchState('error')
-//   3c. Network failure (catch): synthetic network_error, setFacilityData(null), setFetchState('error')
+//   3a. Success: setFacilityData(json.data), setHospMetrics(json.hospMetrics), setManualInputs({}), setFetchState('success')
+//   3b. API error: setErrorState(json.error), setFacilityData(null), setHospMetrics(undefined), setFetchState('error')
+//   3c. Network failure (catch): synthetic network_error, setFacilityData(null), setHospMetrics(undefined), setFetchState('error')
 //
 // D-11: manualInputs reset to {} ONLY on a successful fetch — preserves user work on error.
-// D-12: assembleViewModel(facilityData, manualInputs, new Date()) — new Date() injected here.
+// D-12: assembleViewModel(facilityData, manualInputs, new Date(), hospMetrics) — new Date() injected here.
+// Phase 5: hospMetrics captured from json.hospMetrics on success; cleared to undefined on every error/network branch.
 
 import { useState, useCallback } from "react";
-import type { FacilityData } from "@/lib/cms/types";
+import type { FacilityData, HospMetric } from "@/lib/cms/types";
 import type { CmsApiError } from "@/lib/cms/errors";
 import { CmsApiErrorSchema } from "@/lib/cms/errors";
 import type { ManualInputs } from "@/lib/report/view-model";
@@ -52,6 +53,9 @@ export function SnapshotApp() {
   // ── State ──────────────────────────────────────────────────────────────────
   const [fetchState, setFetchState] = useState<FetchState>("idle");
   const [facilityData, setFacilityData] = useState<FacilityData | null>(null);
+  const [hospMetrics, setHospMetrics] = useState<HospMetric[] | undefined>(
+    undefined,
+  );
   const [errorState, setErrorState] = useState<CmsApiError | null>(null);
   const [manualInputs, setManualInputs] = useState<ManualInputs>({});
 
@@ -73,8 +77,13 @@ export function SnapshotApp() {
         typeof json === "object" &&
         "data" in (json as Record<string, unknown>)
       ) {
-        // 3a. Success
-        setFacilityData((json as { data: FacilityData }).data);
+        // 3a. Success — capture both facility data and optional hospMetrics (Phase 5)
+        const successJson = json as {
+          data: FacilityData;
+          hospMetrics?: HospMetric[];
+        };
+        setFacilityData(successJson.data);
+        setHospMetrics(successJson.hospMetrics); // undefined if absent (D-09 degraded state)
         setManualInputs({}); // D-11: reset ONLY on successful fetch
         setFetchState("success");
       } else if (
@@ -92,6 +101,7 @@ export function SnapshotApp() {
             : { kind: "cms_api_error", message: "Unexpected error response." },
         );
         setFacilityData(null);
+        setHospMetrics(undefined); // clear stale metrics on error
         setFetchState("error");
       } else {
         // 3b'. Unexpected envelope (proxy/CDN error, shape drift) — never push undefined
@@ -100,6 +110,7 @@ export function SnapshotApp() {
           message: "Unexpected response from server.",
         });
         setFacilityData(null);
+        setHospMetrics(undefined); // clear stale metrics on error
         setFetchState("error");
       }
     } catch {
@@ -111,14 +122,16 @@ export function SnapshotApp() {
       };
       setErrorState(networkErr);
       setFacilityData(null);
+      setHospMetrics(undefined); // clear stale metrics on network failure
       setFetchState("error");
     }
   }, []);
 
   // ── View-model assembly ────────────────────────────────────────────────────
   // D-12: assembleViewModel gets new Date() from the caller, never internally
+  // Phase 5: hospMetrics passed as the 4th arg — undefined = D-09 degraded state
   const vm = facilityData
-    ? assembleViewModel(facilityData, manualInputs, new Date())
+    ? assembleViewModel(facilityData, manualInputs, new Date(), hospMetrics)
     : null;
 
   // ── Error routing ──────────────────────────────────────────────────────────
