@@ -5,6 +5,10 @@
 // mapper.ts (Plan 02-02). All field names traced to tests/fixtures/provider-686123.json
 // and NH_Data_Dictionary (CLAUDE.md rule #3).
 //
+// HospMetric is the domain type for one hospitalization/ED data point (Phase 5 / Plan 02).
+// Source: joinClaimsAndAverages() in claims-mapper.ts — the ONLY file that names CMS
+// average column substrings. All 12 rows verbatim-labeled per D-04.
+//
 // Field → CMS source (verified in provider-686123.json):
 //   ccn              ← cms_certification_number_ccn  (string, leading zeros preserved)
 //   providerName     ← provider_name                 (D-15: NOT legal_business_name)
@@ -19,6 +23,42 @@
 //   starRatings.staffing        ← staffing_rating
 //   starRatings.qualityCare     ← qm_rating          (D-16: NOT longstay_qm_rating / shortstay_qm_rating)
 //   (ZIP is excluded — DATA-03: no ZIP in address per reference output)
+
+/**
+ * A single hospitalization/ED data point — one of the 12 rows in the claims metrics section.
+ * Source: joinClaimsAndAverages() in claims-mapper.ts (Phase 5 / Plan 02).
+ *
+ * All field names are camelCase (D-14). No CMS snake_case names leak out of claims-mapper.ts.
+ * The 12 verbatim labels come from the reference template (D-04 — garbles preserved).
+ */
+export interface HospMetric {
+  /** Verbatim label from the reference template (D-04 — garbles preserved as-is). */
+  label: string;
+
+  /**
+   * Facility adjusted score or national/state average value.
+   * null when CMS suppressed the value (empty adjusted_score) or when the measure
+   * is absent from the claims response (fewer-than-4 partial — D-10/SC#5).
+   * Source: adjusted_score (facility rows) or description-matched average column (D-14).
+   */
+  value: number | null;
+
+  /**
+   * Formatter kind: "percent" → formatPercent (1 dp + "%"), "rate" → formatRate (2 dp).
+   * Drives which formatter is called at render time (D-12).
+   * short-stay measures 521/522 and their averages → "percent".
+   * long-stay measures 551/552 and their averages → "rate".
+   */
+  unit: "percent" | "rate";
+
+  /**
+   * CMS footnote code string (D-11). Present and non-empty when CMS suppressed the value.
+   * Empty string "" when the score is absent but no footnote code was provided.
+   * Absent (undefined) for national/state average rows (averages are never suppressed per-row).
+   * formatFootnote(footnoteCode) maps this to a human-readable suppression message.
+   */
+  footnoteCode?: string;
+}
 
 export interface FacilityData {
   /** CMS certification number — preserved as string (leading zeros). */
