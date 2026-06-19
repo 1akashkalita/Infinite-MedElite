@@ -38,6 +38,11 @@ import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { ManualInputsForm } from "@/components/ManualInputsForm";
 import { ReportPreview } from "@/components/ReportPreview";
+import {
+  INFINITE_LOGO_DATA_URI,
+  INFINITE_LOGO_WIDTH,
+  INFINITE_LOGO_HEIGHT,
+} from "@/lib/report/logo";
 
 // FetchState drives both the skeleton and the button disabled state
 type FetchState = "idle" | "loading" | "success" | "error";
@@ -149,8 +154,14 @@ export function SnapshotApp() {
     <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-zinc-50">
       {/* Left pane — search + (Wave 4) manual inputs */}
       <div className="flex-1 flex flex-col gap-4 max-w-sm">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Infinite Snapshot
+        <h1>
+          {/* eslint-disable-next-line @next/next/no-img-element -- data-URI logo, no Next/Image optimization needed */}
+          <img
+            src={INFINITE_LOGO_DATA_URI}
+            alt="INFINITE — Managed by MEDELITE"
+            width={INFINITE_LOGO_WIDTH}
+            height={INFINITE_LOGO_HEIGHT}
+          />
         </h1>
         <p className="text-sm text-zinc-500">
           Enter a CMS Certification Number (CCN) to generate a facility

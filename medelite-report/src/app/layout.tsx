@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Infinite Snapshot",
+  title: "Infinite",
   description:
     "Generate a polished nursing-home facility assessment snapshot from a CMS CCN.",
 };
