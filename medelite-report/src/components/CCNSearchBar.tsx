@@ -100,7 +100,7 @@ export function CCNSearchBar({
           placeholder="Enter CCN (e.g. 686123)"
           maxLength={10}
           className={[
-            "flex-1 rounded-md border px-3 py-2 text-sm",
+            "flex-1 rounded-md border px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400",
             "focus:outline-none focus:ring-2 focus:ring-blue-500",
             displayedError
               ? "border-red-400 bg-red-50"
