@@ -218,7 +218,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — Star-ratings slice (web + PDF + docx) + D-15 grouping foundation: shared colors/star-band/chart-utils modules, HospMetric measureKey/source schema+type+mapper, StarRating + PdfStarRating + colored docx star runs (VIZ-01/VIZ-02 star half, D-01..D-06, D-15)
+- [x] 07-01-PLAN.md — Star-ratings slice (web + PDF + docx) + D-15 grouping foundation: shared colors/star-band/chart-utils modules, HospMetric measureKey/source schema+type+mapper, StarRating + PdfStarRating + colored docx star runs (VIZ-01/VIZ-02 star half, D-01..D-06, D-15)
 
 **Wave 2** *(depends on 07-01 — consumes measureKey/source + groupByMeasure + CHART_SERIES; shared ReportPreview/ReportPDF/ReportDocx files)*
 
@@ -243,4 +243,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
 | 6. .docx Export | 3/3 | Complete   | 2026-06-20 |
-| 7. Visualizations & Polish | 0/3 | Not started | - |
+| 7. Visualizations & Polish | 1/3 | In Progress|  |

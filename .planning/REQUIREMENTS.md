@@ -66,8 +66,8 @@ All v1 requirements below are committed scope for this milestone (required take-
 
 ### Visualizations (bonus)
 
-- [ ] **VIZ-01**: Star ratings and key metrics render as polished visual cards/charts in the web UI
-- [ ] **VIZ-02**: Visual elements render correctly inside the PDF using react-pdf SVG primitives / react-pdf-charts (never DOM-based charting)
+- [x] **VIZ-01**: Star ratings and key metrics render as polished visual cards/charts in the web UI
+- [x] **VIZ-02**: Visual elements render correctly inside the PDF using react-pdf SVG primitives / react-pdf-charts (never DOM-based charting)
 
 ### Error Handling (bonus, cross-cutting)
 
@@ -136,8 +136,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | CLM-02 | Phase 5 | Complete |
 | CLM-03 | Phase 5 | Complete |
 | DOCX-01 | Phase 6 | Complete |
-| VIZ-01 | Phase 7 | Pending |
-| VIZ-02 | Phase 7 | Pending |
+| VIZ-01 | Phase 7 | Complete |
+| VIZ-02 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 28 total
