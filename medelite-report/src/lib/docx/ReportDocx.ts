@@ -43,6 +43,7 @@ import {
   WidthType,
   BorderStyle,
   PageOrientation,
+  TableLayoutType,
 } from "docx";
 import {
   formatRating,
@@ -249,8 +250,18 @@ export function buildReportDocx(vm: ReportViewModel): Document {
     );
   }
 
+  // columnWidths drives <w:tblGrid> in the OOXML output. Microsoft Word honours
+  // <w:tblGrid> for column layout and ignores per-cell w:tcW when a fixed table grid
+  // is present. Without columnWidths the docx library emits placeholder grid entries
+  // of <w:gridCol w:w="100"/> (≈ 0.07 inch) so Word collapses both columns to ~1
+  // character wide, causing every cell to wrap one letter per line. Specifying the
+  // real widths here (summing to TABLE_WIDTH_DXA) fixes the collapse in Word.
+  // TableLayoutType.FIXED tells Word to respect the explicit column widths rather
+  // than auto-fitting to content.
   const bodyTable = new Table({
     width: { size: TABLE_WIDTH_DXA, type: WidthType.DXA },
+    columnWidths: [LABEL_CELL_WIDTH_DXA, VALUE_CELL_WIDTH_DXA],
+    layout: TableLayoutType.FIXED,
     borders: ALL_BORDERS,
     rows: [...bodyRows, ...metricRows],
   });
