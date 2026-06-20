@@ -13,6 +13,7 @@
 // user-controlled string → no SVG/XXE/SSRF injection surface.
 
 import { Resvg } from "@resvg/resvg-js";
+import { getChartFontFiles, CHART_FONT_FAMILY } from "@/lib/charts/chart-font";
 
 /**
  * Rasterizes an SVG string to a PNG Buffer using @resvg/resvg-js.
@@ -32,8 +33,16 @@ export function svgToPngBuffer(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   height = 140,
 ): Buffer {
+  // RESVG-FONT-01: supply an embedded font + disable system fonts so SVG <text> renders
+  // identically on macOS and Vercel Lambda (Lambda has no system fonts → blank chart labels).
   const resvg = new Resvg(svgString, {
     fitTo: { mode: "width", value: width },
+    font: {
+      loadSystemFonts: false,
+      fontFiles: getChartFontFiles(),
+      defaultFontFamily: CHART_FONT_FAMILY,
+      sansSerifFamily: CHART_FONT_FAMILY,
+    },
   });
   const pngData = resvg.render();
   return Buffer.from(pngData.asPng());
