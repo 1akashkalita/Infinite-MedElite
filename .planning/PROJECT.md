@@ -108,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-18 after Phase 4 (PDF Export) completion — all Required items validated; bonus phases (claims metrics, charts, .docx) next. App live at https://infinite-snapshot.vercel.app*
+*Last updated: 2026-06-20 after Phase 6 (.docx Export) completion — Required items + claims metrics + .docx export validated; the .docx now fills the official Word template (jszip/OOXML) with a clickable CMS link footer. Phase 7 (Visualizations & Polish) next. App live at https://infinite-snapshot.vercel.app (rename to infinite-medelite pending in Vercel dashboard).*
