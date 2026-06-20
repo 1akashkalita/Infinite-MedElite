@@ -222,7 +222,7 @@ Plans:
 
 **Wave 2** *(depends on 07-01 — consumes measureKey/source + groupByMeasure + CHART_SERIES; shared ReportPreview/ReportPDF/ReportDocx files)*
 
-- [ ] 07-02-PLAN.md — Claims-charts slice (web recharts + PDF react-pdf-charts + docx PNGs): `@resvg/resvg-js` install behind a legitimacy checkpoint + serverExternalPackages, MiniBarChart + PdfMiniBarChart + chart-svg/rasterize lib, 4 charts added below the 12 verbatim rows (VIZ-01/VIZ-02 chart half, D-07..D-09, D-11, DOCX-01 size guard with images)
+- [x] 07-02-PLAN.md — Claims-charts slice (web recharts + PDF react-pdf-charts + docx PNGs): `@resvg/resvg-js` install behind a legitimacy checkpoint + serverExternalPackages, MiniBarChart + PdfMiniBarChart + chart-svg/rasterize lib, 4 charts added below the 12 verbatim rows (VIZ-01/VIZ-02 chart half, D-07..D-09, D-11, DOCX-01 size guard with images)
 
 **Wave 3** *(depends on 07-01 + 07-02 — smoke-tests the stars + charts; shared SnapshotApp file)*
 
@@ -243,4 +243,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
 | 6. .docx Export | 3/3 | Complete   | 2026-06-20 |
-| 7. Visualizations & Polish | 1/3 | In Progress|  |
+| 7. Visualizations & Polish | 2/3 | In Progress|  |
