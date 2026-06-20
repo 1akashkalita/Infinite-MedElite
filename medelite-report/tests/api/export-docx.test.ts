@@ -228,6 +228,37 @@ describe("DOCX template-fill assertions", () => {
     expect(xml).not.toMatch(/w:fill="ffff00"/i);
   });
 
+  // DOCX-01 footer hyperlink assertions (rule #7: clickable Medicare link in every export).
+  it('footer contains the CMS link label "View official CMS profile on Medicare.gov"', async () => {
+    const { xml } = await getFilledXml(validVm);
+    expect(xml).toContain("View official CMS profile on Medicare.gov");
+  });
+
+  it('footer contains the processing-date label "CMS dataset processing date"', async () => {
+    const { xml } = await getFilledXml(validVm);
+    expect(xml).toContain("CMS dataset processing date");
+  });
+
+  it('footer contains a <w:hyperlink with r:id="rIdCmsLink"', async () => {
+    const { xml } = await getFilledXml(validVm);
+    expect(xml).toContain('r:id="rIdCmsLink"');
+    expect(xml).toContain("<w:hyperlink");
+  });
+
+  it("word/_rels/document.xml.rels contains rIdCmsLink External relationship pointing to careCompareUrl", async () => {
+    const bytes = await buildReportDocxBuffer(validVm);
+    const zip = await JSZip.loadAsync(bytes);
+    const relsFile = zip.file("word/_rels/document.xml.rels");
+    expect(relsFile).not.toBeNull();
+    const rels = await relsFile!.async("string");
+    expect(rels).toContain('Id="rIdCmsLink"');
+    expect(rels).toContain('TargetMode="External"');
+    // careCompareUrl for CCN 686123
+    expect(rels).toContain(
+      "https://www.medicare.gov/care-compare/details/nursing-home/686123",
+    );
+  });
+
   // Label-parity guard: every label from claims-mapper must appear as a filled row.
   // This guards against future label drift between the claims-mapper and the template.
   it("all 12 claims-mapper labels appear as filled rows in the output (label-parity guard)", async () => {
