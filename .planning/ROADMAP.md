@@ -187,8 +187,19 @@ Plans:
   2. The .docx content matches the web preview: static header block, facility data, all manual inputs, and the claims metrics section
   3. The route handler test asserts `Buffer.byteLength(docxBuffer) < 4_500_000` and correct `Content-Type` / `Content-Disposition` headers
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Server foundations: generalize `slugFilename` with an `ext` param (D-13) + build `ReportDocx.ts`, the server-only docx twin of `ReportPDF` (static logo header, 13+12 rows, Medicare link)
+
+**Wave 2** *(depends on 06-01 — consumes buildReportDocx + the generalized slug)*
+
+- [ ] 06-02-PLAN.md — Route slice: Wave 0 `export-docx.test.ts` + `POST /api/export/docx` cloning the PDF contract (validate → `Packer.toBuffer` → OOXML headers; clean 400 envelope; PK-ZIP + 4.5 MB assertions)
+
+**Wave 3** *(depends on 06-02 — consumes the live /api/export/docx route)*
+
+- [ ] 06-03-PLAN.md — Client slice: `ExportControls` (PDF|DOCX toggle, D-01..D-05) replaces `DownloadPdfButton` in `SnapshotApp`; closes DOCX-01 end-to-end; `verify:full` phase gate + human UAT
 
 ### Phase 7: Visualizations & Polish
 
@@ -218,5 +229,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
-| 6. .docx Export | 0/TBD | Not started | - |
+| 6. .docx Export | 0/3 | Planned | - |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
