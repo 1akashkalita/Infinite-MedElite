@@ -81,8 +81,9 @@ export const ReportViewModelSchema = z.object({
     ccn: z.string(),
     /** CMS operating name (provider_name). */
     providerName: z.string(),
-    /** Display name: manual.nameOverride?.trim() || providerName (NAME-02). */
-    displayName: z.string(),
+    /** Display name: manual.nameOverride?.trim() || providerName (NAME-02).
+     * WR-01: cap at 500 chars — client-controlled and injected into document XML. */
+    displayName: z.string().max(500),
     /** Composed address (no ZIP — DATA-03). */
     address: z.object({
       street: z.string(),
@@ -128,12 +129,17 @@ export const ReportViewModelSchema = z.object({
 
   /** Manual operational inputs that don't live in CMS. */
   manual: z.object({
-    emr: z.string().optional(),
+    // WR-01: free-text fields capped at generous-but-bounded lengths so a client-controlled
+    // POST body cannot trigger unbounded server-side allocation (string → XML → zip).
+    // Caps are well above any realistic operational value; they yield a clean 400 envelope
+    // when exceeded (existing route validation passes the whole model through
+    // ReportViewModelSchema). Field optionality/nullability is unchanged.
+    emr: z.string().max(500).optional(),
     currentCensus: z.number().nullable().optional(),
-    typeOfPatient: z.string().optional(),
-    medicalCoverage: z.string().optional(),
+    typeOfPatient: z.string().max(500).optional(),
+    medicalCoverage: z.string().max(2000).optional(),
     previousCoverage: z.enum(["Yes", "No"]).nullable().optional(),
-    previousProviderPerformance: z.string().optional(),
+    previousProviderPerformance: z.string().max(2000).optional(),
   }),
 
   /** ISO string of when this snapshot was generated (injected by caller — D-12). */
