@@ -35,6 +35,9 @@ import {
 } from "@/lib/report/format";
 import { getStarBand, buildStarGlyphs } from "@/lib/report/star-band";
 import { STAR_BAND_HEX } from "@/lib/report/colors";
+import { groupByMeasure } from "@/lib/report/chart-utils";
+import { buildChartData, renderChartSvgString } from "@/lib/charts/chart-svg";
+import { svgToPngBuffer } from "@/lib/charts/rasterize";
 import { FACILITY_TEMPLATE_DOCX_BASE64 } from "@/lib/docx/template";
 import type { ReportViewModel } from "@/lib/report/view-model";
 import type { HospMetric } from "@/lib/cms/types";
@@ -301,9 +304,110 @@ export async function buildReportDocxBuffer(
   // string-form replacement.
   const relXml = `<Relationship Id="rIdCmsLink" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${xmlEsc(f.careCompareUrl)}" TargetMode="External"/>`;
   rels = rels.replace("</Relationships>", () => relXml + "</Relationships>");
+  // Note: rels is written to zip after the optional chart-image rels are added (step 10).
+
+  // 10. Embed chart PNGs (D-11 / T-7-04 / T-7-05 / DOCX-01).
+  //     Four grouped-bar chart images (one per measure group) rasterized from recharts SVG
+  //     via @resvg/resvg-js. Each PNG is added to word/media/ and referenced via a new
+  //     Image relationship + a <w:drawing> paragraph before the body <w:sectPr>.
+  //
+  //     Security (T-7-04): SVG is generated purely from validated vm.hospMetrics numeric
+  //     values and closed-enum CHART_SERIES colors — no user-controlled string reaches the SVG.
+  //     Size (T-7-05 / DOCX-01): dimensions fixed at 300×140 px; 4 charts ≈ 60–200 KB total,
+  //     well within the 4.5 MB limit. The export-docx.test.ts assertion guards this bound.
+  //     CR-01: all .replace() calls injecting chart XML use callback form.
+  if (vm.hospMetrics && vm.hospMetrics.length > 0) {
+    const groups = groupByMeasure(vm.hospMetrics);
+    const CHART_IMG_W_PX = 300;
+    const CHART_IMG_H_PX = 140;
+    // EMU = pixels × 9525 (DOCX-EMU-01: docx ImageRun uses PIXELS but raw OOXML uses EMU)
+    const CHART_EMU_W = CHART_IMG_W_PX * 9525;
+    const CHART_EMU_H = CHART_IMG_H_PX * 9525;
+
+    // Relationship type URI for images
+    const IMG_REL_TYPE =
+      "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image";
+
+    // Guard: assert our chart relationship IDs are not pre-existing in the template rels.
+    // This runs after the CMS link was added to rels above (step 9).
+    for (let i = 0; i < groups.length; i++) {
+      const rId = `rIdChart${i}`;
+      if (rels.includes(`Id="${rId}"`)) {
+        throw new Error(
+          `Template already contains a relationship with Id=${rId} — guard triggered; template may have changed.`,
+        );
+      }
+    }
+
+    // Build chart paragraphs and inject PNGs
+    let chartParagraphs = "";
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
+      const chartData = buildChartData(group);
+
+      // Skip all-suppressed groups (no bars to render — D-09)
+      if (chartData.length === 0) continue;
+
+      const svg = renderChartSvgString(
+        chartData,
+        CHART_IMG_W_PX,
+        CHART_IMG_H_PX,
+      );
+      // Guard: skip groups where SVG generation failed or produced an empty/invalid result
+      // (open-question fallback if renderToStaticMarkup does not produce a valid SVG in this context)
+      if (!svg || !svg.includes("<svg")) continue;
+      const png = svgToPngBuffer(svg, CHART_IMG_W_PX, CHART_IMG_H_PX);
+
+      // Add PNG to word/media/
+      const mediaPath = `word/media/chart-${i}.png`;
+      zip.file(mediaPath, png);
+
+      // Add Image relationship to rels (accumulated, written at end of step 10)
+      const rId = `rIdChart${i}`;
+      const relEntry = `<Relationship Id="${rId}" Type="${IMG_REL_TYPE}" Target="media/chart-${i}.png"/>`;
+      // CR-01: callback form for rels injection (consistent CR-01 discipline)
+      rels = rels.replace(
+        "</Relationships>",
+        () => relEntry + "</Relationships>",
+      );
+
+      // Build <w:drawing> inline image paragraph (raw OOXML)
+      // EMU values: DOCX-EMU-01 — raw OOXML <a:ext> takes EMU (px × 9525), NOT pixels
+      const drawingXml =
+        `<w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r><w:rPr/><w:drawing>` +
+        `<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0">` +
+        `<wp:extent cx="${CHART_EMU_W}" cy="${CHART_EMU_H}"/>` +
+        `<wp:effectExtent l="0" t="0" r="0" b="0"/>` +
+        `<wp:docPr id="${10 + i}" name="chart-${i}"/>` +
+        `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">` +
+        `<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
+        `<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
+        `<pic:nvPicPr><pic:cNvPr id="${10 + i}" name="chart-${i}"/><pic:cNvPicPr/></pic:nvPicPr>` +
+        `<pic:blipFill>` +
+        `<a:blip r:embed="${rId}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>` +
+        `<a:stretch><a:fillRect/></a:stretch>` +
+        `</pic:blipFill>` +
+        `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${CHART_EMU_W}" cy="${CHART_EMU_H}"/></a:xfrm>` +
+        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>` +
+        `</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+
+      chartParagraphs += drawingXml;
+    }
+
+    // Inject chart paragraphs before <w:sectPr> (CR-01 callback form)
+    // Note: the footer paragraph was already injected at step 8 before <w:sectPr>.
+    // Chart paragraphs are injected again before the remaining <w:sectPr>, which places
+    // them between the footer paragraph and the section properties — acceptable since the
+    // template has only one <w:sectPr> and the footer paragraph replaced the first occurrence.
+    if (chartParagraphs) {
+      xml = xml.replace("<w:sectPr>", () => chartParagraphs + "<w:sectPr>");
+    }
+  }
+
+  // Write rels — includes rIdCmsLink (step 9) + chart image rels (step 10, if any).
   zip.file("word/_rels/document.xml.rels", rels);
 
-  // 10. Write the modified XML back into the zip and re-serialize.
+  // 11. Write the modified XML back into the zip and re-serialize.
   zip.file("word/document.xml", xml);
 
   const bytes = await zip.generateAsync({ type: "uint8array" });

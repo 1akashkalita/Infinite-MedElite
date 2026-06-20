@@ -396,6 +396,74 @@ describe("CR-01 footgun — $ in user input survives OOXML fill verbatim", () =>
 });
 
 // ---------------------------------------------------------------------------
+// Task 3 (07-02): Chart PNG embedding in docx (D-11 / DOCX-01 / T-7-04 / T-7-05)
+//
+// Guards:
+//  - validVmWithMetrics → zip contains ≥1 word/media/chart-*.png with PNG magic bytes.
+//  - validVmWithMetrics → word/_rels/document.xml.rels contains ≥1 rIdChart relationship.
+//  - Degraded vm (hospMetrics undefined) → NO chart media entries.
+//  - DOCX-01 size guard: buffer WITH 4 chart PNGs must be under 4_500_000 bytes.
+// ---------------------------------------------------------------------------
+
+describe("DOCX chart PNG embedding — D-11 / DOCX-01 / T-7-04 / T-7-05", () => {
+  async function getZip(vm: typeof validVm): Promise<JSZip> {
+    const bytes = await buildReportDocxBuffer(vm);
+    return JSZip.loadAsync(bytes);
+  }
+
+  it("validVmWithMetrics → zip contains ≥1 word/media/chart-*.png entry (T-7-04)", async () => {
+    const zip = await getZip(validVmWithMetrics);
+    const chartPngs = Object.keys(zip.files).filter(
+      (name) => name.startsWith("word/media/chart-") && name.endsWith(".png"),
+    );
+    expect(chartPngs.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("chart PNGs have PNG magic bytes 0x89 0x50 0x4E 0x47 (T-7-04)", async () => {
+    const zip = await getZip(validVmWithMetrics);
+    const chartPngs = Object.keys(zip.files).filter(
+      (name) => name.startsWith("word/media/chart-") && name.endsWith(".png"),
+    );
+    for (const pngPath of chartPngs) {
+      const buf = Buffer.from(await zip.file(pngPath)!.async("arraybuffer"));
+      expect(buf[0]).toBe(0x89);
+      expect(buf[1]).toBe(0x50); // P
+      expect(buf[2]).toBe(0x4e); // N
+      expect(buf[3]).toBe(0x47); // G
+    }
+  });
+
+  it("validVmWithMetrics → rels contains ≥1 rIdChart relationship (T-7-05)", async () => {
+    const zip = await getZip(validVmWithMetrics);
+    const relsFile = zip.file("word/_rels/document.xml.rels");
+    expect(relsFile).not.toBeNull();
+    const rels = await relsFile!.async("string");
+    expect(rels).toMatch(/Id="rIdChart\d+"/);
+  });
+
+  it("degraded vm (hospMetrics undefined) → NO chart media entries (D-09)", async () => {
+    // Build a vm without hospMetrics (degraded path)
+    const degradedVm = assembleViewModel(
+      toFacilityData(parseCMSRow(providerFixture[0])),
+      {},
+      FIXED_DATE,
+      // no hospMetrics arg → undefined
+    );
+    const zip = await getZip(degradedVm);
+    const chartPngs = Object.keys(zip.files).filter(
+      (name) => name.startsWith("word/media/chart-") && name.endsWith(".png"),
+    );
+    expect(chartPngs.length).toBe(0);
+  });
+
+  // DOCX-01: size guard WITH 4 chart PNGs — assert against validVmWithMetrics (not validVm)
+  it("buffer with 4 chart PNGs is under 4_500_000 bytes (DOCX-01 SC#3 size limit)", async () => {
+    const bytes = await buildReportDocxBuffer(validVmWithMetrics);
+    expect(Buffer.byteLength(bytes)).toBeLessThan(4_500_000);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Task 3: colored Unicode star runs in docx (D-11 / VIZ-02 / T-7-02)
 //
 // Guards:

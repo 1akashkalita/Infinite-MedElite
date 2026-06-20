@@ -3,35 +3,31 @@
 // Tests run in node env (no jsdom, no renderToBuffer). This file is .test.ts (not .test.tsx)
 // so that Vitest picks it up (vitest.config.ts include: "src/**/*.test.ts").
 //
-// TEST MECHANISM (from PLAN.md <interfaces> section):
+// TEST MECHANISM:
 //   Import PdfMiniBarChart from the .tsx file. Esbuild transpiles the imported JSX.
 //   Call PdfMiniBarChart({ group }) directly to get the returned React element.
 //   Walk the element tree via a recursive findByType() helper that traverses props.children
-//   (handling arrays + nested elements). Match component types against the imported
-//   ReactPDFChart, Bar, and Legend references.
+//   (handling arrays + nested elements). Match component types against react-pdf primitives.
 //
-// WHAT IS GUARDED (Blocker 2):
-//   (1) The element tree wraps chart content in ReactPDFChart (VIZ-02 adapter guard).
-//   (2) Every <Bar> node carries isAnimationActive === false (Pitfall 1 / blank-chart guard).
-//   (3) At least one <Legend> node is present (D-08 / Blocker 1 — PDF chart carries a legend).
-//   (4) An all-suppressed group has NO <Bar> node (returns the N/A Text path).
+// WHAT IS GUARDED (native SVG implementation — VIZ-02):
+//   (1) Non-empty group → element tree contains at least one Svg node (chart renders as SVG).
+//   (2) Non-empty group → element tree contains at least one Rect node (bars rendered).
+//   (3) D-08: element tree contains Text nodes OUTSIDE Svg with series names (legend).
+//   (4) D-09: all-suppressed → NO Svg node (returns the N/A Text path, no empty chart).
+//   (5) Partial group → chart renders (Svg node present) with only available bars.
+//   (6) CLM-03 guard: NO Text elements inside Svg (avoids SVG CID font encoding collision
+//       that prevents extractTextFromPdf from reading metric label text in the PDF buffer).
 //
-// This structural test simultaneously guards Pitfall 1 and Blocker 1/D-08 without needing
-// DOM rendering or renderToBuffer — it runs in ~100ms as a pure element-tree inspection.
+// NOTE: The previous implementation used react-pdf-charts (ReactPDFChart) + recharts
+// (Bar, Legend). That approach was replaced with native react-pdf SVG primitives because
+// recharts is in Next.js's default optimizePackageImports list, which conflicts with
+// serverExternalPackages. Text labels are outside Svg to avoid PDF font encoding collisions.
 
 import { describe, expect, it } from "vitest";
 import { PdfMiniBarChart } from "./PdfMiniBarChart";
+import { Svg, Rect, Text } from "@react-pdf/renderer";
 import type { MeasureGroup } from "@/lib/report/chart-utils";
 import type { HospMetric } from "@/lib/cms/types";
-
-// Import ReactPDFChart and recharts components to compare against element.type references.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const ReactPDFChart = require("react-pdf-charts").default as unknown;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { Bar, Legend } = require("recharts") as {
-  Bar: unknown;
-  Legend: unknown;
-};
 
 // ---------------------------------------------------------------------------
 // findByType — recursive element tree walker (handles arrays at any depth)
@@ -39,7 +35,7 @@ const { Bar, Legend } = require("recharts") as {
 
 type AnyElement = {
   type?: unknown;
-  props?: { children?: unknown };
+  props?: { children?: unknown; [key: string]: unknown };
 };
 
 /**
@@ -54,7 +50,6 @@ function findByType(
 
   if (node === null || node === undefined) return results;
 
-  // Handle arrays (e.g. data.map() returns an array of elements)
   if (Array.isArray(node)) {
     for (const child of node) {
       results.push(...findByType(child, predicate));
@@ -62,19 +57,80 @@ function findByType(
     return results;
   }
 
-  // Must be an object to be a React element
   if (typeof node !== "object") return results;
 
   const el = node as AnyElement;
 
-  // Check this node
   if (predicate(el.type)) {
     results.push(el);
   }
 
-  // Recurse into children
   if (el.props?.children !== undefined) {
     results.push(...findByType(el.props.children, predicate));
+  }
+
+  return results;
+}
+
+/**
+ * Recursively collects all Text content strings from a React element tree.
+ */
+function findTextContent(node: unknown): string[] {
+  const results: string[] = [];
+
+  if (node === null || node === undefined) return results;
+  if (typeof node === "string") {
+    results.push(node);
+    return results;
+  }
+  if (typeof node === "number") {
+    results.push(String(node));
+    return results;
+  }
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      results.push(...findTextContent(child));
+    }
+    return results;
+  }
+  if (typeof node !== "object") return results;
+
+  const el = node as AnyElement;
+  if (el.props?.children !== undefined) {
+    results.push(...findTextContent(el.props.children));
+  }
+
+  return results;
+}
+
+/**
+ * Returns all Text elements that are INSIDE any Svg node in the tree.
+ * CLM-03 guard: Text inside Svg uses SVG CID glyph encoding, which causes
+ * font table collisions that prevent extractTextFromPdf from reading metric labels.
+ */
+function findTextInsideSvg(node: unknown): AnyElement[] {
+  const results: AnyElement[] = [];
+
+  if (node === null || node === undefined) return results;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      results.push(...findTextInsideSvg(child));
+    }
+    return results;
+  }
+  if (typeof node !== "object") return results;
+
+  const el = node as AnyElement;
+
+  if (el.type === Svg) {
+    // Search inside this Svg for any Text nodes
+    const textNodesInSvg = findByType(el.props?.children, (t) => t === Text);
+    results.push(...textNodesInSvg);
+    return results;
+  }
+
+  if (el.props?.children !== undefined) {
+    results.push(...findTextInsideSvg(el.props.children));
   }
 
   return results;
@@ -98,7 +154,6 @@ function makeMetric(
   };
 }
 
-/** Full group with all three slots present and non-null. */
 const fullGroup: MeasureGroup = {
   key: "521",
   label: "Short-Stay Rehospitalization",
@@ -108,7 +163,6 @@ const fullGroup: MeasureGroup = {
   state: makeMetric(16.5, "state"),
 };
 
-/** All-suppressed group — every value is null. */
 const allSuppressedGroup: MeasureGroup = {
   key: "551",
   label: "Long-Stay Hospitalizations",
@@ -118,7 +172,6 @@ const allSuppressedGroup: MeasureGroup = {
   state: makeMetric(null, "state"),
 };
 
-/** Partial group — only facility and state present (national suppressed). */
 const partialGroup: MeasureGroup = {
   key: "522",
   label: "Short-Stay ED Visits",
@@ -140,30 +193,34 @@ describe("PdfMiniBarChart — full group structural test", () => {
     expect(element).toBeDefined();
   });
 
-  it("(VIZ-02) element tree contains at least one ReactPDFChart node", () => {
-    const nodes = findByType(element, (t) => t === ReactPDFChart);
+  it("(VIZ-02) element tree contains at least one Svg node", () => {
+    const nodes = findByType(element, (t) => t === Svg);
     expect(nodes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("(Pitfall 1) element tree contains at least one Bar node", () => {
-    const barNodes = findByType(element, (t) => t === Bar);
-    expect(barNodes.length).toBeGreaterThanOrEqual(1);
+  it("(VIZ-02) element tree contains at least one Rect node (bars)", () => {
+    const rectNodes = findByType(element, (t) => t === Rect);
+    expect(rectNodes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("(Pitfall 1) every Bar node has isAnimationActive === false", () => {
-    const barNodes = findByType(element, (t) => t === Bar);
-    expect(barNodes.length).toBeGreaterThanOrEqual(1);
-    for (const barNode of barNodes) {
-      expect(
-        (barNode.props as Record<string, unknown>)?.isAnimationActive,
-        "Bar.props.isAnimationActive must be false (MANDATORY — Pitfall 1)",
-      ).toBe(false);
-    }
+  it("(D-08) 'Facility' appears in the legend text (outside Svg)", () => {
+    const texts = findTextContent(element);
+    expect(texts.join(" ")).toContain("Facility");
   });
 
-  it("(D-08 / Blocker 1) element tree contains at least one Legend node", () => {
-    const legendNodes = findByType(element, (t) => t === Legend);
-    expect(legendNodes.length).toBeGreaterThanOrEqual(1);
+  it("(D-08) 'National' appears in the legend text (outside Svg)", () => {
+    const texts = findTextContent(element);
+    expect(texts.join(" ")).toContain("National");
+  });
+
+  it("(D-08) 'State' appears in the legend text (outside Svg)", () => {
+    const texts = findTextContent(element);
+    expect(texts.join(" ")).toContain("State");
+  });
+
+  it("(CLM-03 guard) NO Text elements appear inside any Svg node", () => {
+    const textInsideSvg = findTextInsideSvg(element);
+    expect(textInsideSvg).toHaveLength(0);
   });
 });
 
@@ -175,18 +232,22 @@ describe("PdfMiniBarChart — all-suppressed group (D-09 N/A path)", () => {
   const element = PdfMiniBarChart({ group: allSuppressedGroup });
 
   it("returns a non-null element (renders N/A path, not null)", () => {
-    // The all-suppressed path returns a <View><Text>N/A</Text></View>, not null
     expect(element).not.toBeNull();
   });
 
-  it("(D-09) element tree has NO Bar nodes for an all-suppressed group", () => {
-    const barNodes = findByType(element, (t) => t === Bar);
-    expect(barNodes).toHaveLength(0);
+  it("(D-09) NO Svg nodes for all-suppressed group", () => {
+    const svgNodes = findByType(element, (t) => t === Svg);
+    expect(svgNodes).toHaveLength(0);
   });
 
-  it("(D-09) element tree has NO ReactPDFChart nodes for an all-suppressed group", () => {
-    const chartNodes = findByType(element, (t) => t === ReactPDFChart);
-    expect(chartNodes).toHaveLength(0);
+  it("(D-09) NO Rect nodes for all-suppressed group", () => {
+    const rectNodes = findByType(element, (t) => t === Rect);
+    expect(rectNodes).toHaveLength(0);
+  });
+
+  it("(D-09) 'N/A' text appears for all-suppressed group", () => {
+    const texts = findTextContent(element);
+    expect(texts.join("")).toContain("N/A");
   });
 });
 
@@ -201,23 +262,25 @@ describe("PdfMiniBarChart — partial group (D-09 partial-chart)", () => {
     expect(element).not.toBeNull();
   });
 
-  it("partial group still has ReactPDFChart wrapper (chart renders with available bars)", () => {
-    const chartNodes = findByType(element, (t) => t === ReactPDFChart);
-    expect(chartNodes.length).toBeGreaterThanOrEqual(1);
+  it("partial group renders an Svg node", () => {
+    const svgNodes = findByType(element, (t) => t === Svg);
+    expect(svgNodes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("partial group still has a Legend node (D-08)", () => {
-    const legendNodes = findByType(element, (t) => t === Legend);
-    expect(legendNodes.length).toBeGreaterThanOrEqual(1);
+  it("partial group has Rect nodes for the available bars", () => {
+    const rectNodes = findByType(element, (t) => t === Rect);
+    expect(rectNodes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("partial group's Bar node has isAnimationActive === false (Pitfall 1)", () => {
-    const barNodes = findByType(element, (t) => t === Bar);
-    expect(barNodes.length).toBeGreaterThanOrEqual(1);
-    for (const barNode of barNodes) {
-      expect(
-        (barNode.props as Record<string, unknown>)?.isAnimationActive,
-      ).toBe(false);
-    }
+  it("(D-08) partial group has 'Facility' and 'State' labels but NOT 'National'", () => {
+    const texts = findTextContent(element).join(" ");
+    expect(texts).toContain("Facility");
+    expect(texts).toContain("State");
+    expect(texts).not.toContain("National");
+  });
+
+  it("(CLM-03 guard) partial group has NO Text elements inside any Svg node", () => {
+    const textInsideSvg = findTextInsideSvg(element);
+    expect(textInsideSvg).toHaveLength(0);
   });
 });

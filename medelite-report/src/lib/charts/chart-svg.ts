@@ -1,121 +1,46 @@
-// chart-svg.ts — Server-only SVG chart generator for server-side rendering and docx rasterization.
+// chart-svg.ts — Server-only SVG chart generator for docx rasterization.
 //
 // NO "use client" — this file is server-only. Import only from route handlers or server modules.
-// The react-dom/server renderToStaticMarkup API is Node-only in this context; never include
-// in client bundles.
+// This module must NOT be transitively imported by any "use client" component.
 //
-// buildChartData: maps a MeasureGroup to the ChartDatum[] array consumed by chart components.
-//   - Filters out slots whose value is null (D-09 suppression — omit bar, not "0" bar).
-//   - Colors come from the shared CHART_SERIES constants (D-08: series identity, NOT performance bands).
+// buildChartData / ChartDatum live in chart-data.ts (shared, no server-only imports) so that
+// client components (MiniBarChart.tsx) can import the data builder without pulling in
+// server-only APIs. This file re-exports them for backward-compat so server-only callers
+// (ReportDocx.ts, PdfMiniBarChart.tsx) can continue to import from one place.
 //
-// renderChartSvgString: calls renderToStaticMarkup (react-dom/server) on a minimal recharts
-//   <BarChart> to produce an SVG string. Used by the docx rasterizer (svgToPngBuffer) to
-//   generate chart PNGs for ImageRun embedding. isAnimationActive={false} is MANDATORY — without
-//   it, recharts animation code runs during renderToStaticMarkup and may produce empty/partial
-//   SVG (Pitfall 1 / RESEARCH.md §Common Pitfalls). This also serves as the Open Question 1
-//   smoke-test: if renderToStaticMarkup throws on recharts in node env, the unit test catches
-//   it here, not silently in production.
+// renderChartSvgString: builds a minimal grouped bar chart SVG using raw SVG geometry (no
+//   recharts, no react-dom/server). This approach avoids two Turbopack pitfalls:
+//   1. react-dom/server is blocked as a static top-level import in Route Handler bundles.
+//   2. recharts (a React class-component library) breaks when bundled into server chunks
+//      ("Super expression must either be null or a function" — class inheritance in server env).
+//   The hand-crafted SVG is deterministic and @resvg/resvg-js compatible without any
+//   DOM or React runtime dependency.
 
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { CHART_SERIES } from "@/lib/report/colors";
-import type { MeasureGroup } from "@/lib/report/chart-utils";
-
-// ---------------------------------------------------------------------------
-// ChartDatum — the data shape consumed by both MiniBarChart and renderChartSvgString
-// ---------------------------------------------------------------------------
-
-/** One bar in a grouped bar chart: a named data point with a value and series color. */
-export interface ChartDatum {
-  /** Series name — "Facility", "National", or "State". */
-  name: string;
-  /** Numeric value (already filtered — never null in a ChartDatum). */
-  value: number;
-  /** Series color hex — from CHART_SERIES (D-08 series identity, not performance band). */
-  color: string;
-}
+// Re-export shared types so server-only callers don't need to change import paths.
+export type { ChartDatum } from "@/lib/charts/chart-data";
+export { buildChartData } from "@/lib/charts/chart-data";
+import type { ChartDatum } from "@/lib/charts/chart-data";
 
 // ---------------------------------------------------------------------------
-// buildChartData — map a MeasureGroup to ChartDatum[], filtering suppressed slots (D-09)
+// renderChartSvgString — hand-crafted SVG bar chart (no recharts, no react-dom)
 // ---------------------------------------------------------------------------
 
 /**
- * Maps a MeasureGroup to a ChartDatum array for chart rendering.
+ * Renders a ChartDatum[] into a minimal grouped bar chart SVG string.
  *
- * Slots where value === null are filtered OUT (D-09 suppression rule — omit bar entirely,
- * do not render a "0" bar). A partially-suppressed group returns only the available bars.
- * An all-suppressed group returns [] (caller renders an N/A indication per D-09).
+ * Used by the docx rasterizer (svgToPngBuffer) to generate chart PNGs for docx embedding.
+ * Does NOT use recharts or react-dom/server — generates raw SVG geometry for full
+ * server-side compatibility (Turbopack + @resvg/resvg-js).
  *
- * Colors come from CHART_SERIES (D-08: series identity — facility=blue, national=green, state=amber;
- * these are NOT performance indicators — always render with a legend so readers know what each
- * color means).
- *
- * @param group — A MeasureGroup from groupByMeasure(vm.hospMetrics).
- * @returns ChartDatum[] with only non-null slots (may be empty for all-suppressed groups).
- */
-export function buildChartData(group: MeasureGroup): ChartDatum[] {
-  const candidates: ChartDatum[] = [];
-
-  if (group.facility !== undefined && group.facility.value !== null) {
-    candidates.push({
-      name: "Facility",
-      value: group.facility.value,
-      color: CHART_SERIES.facility,
-    });
-  }
-  if (group.nation !== undefined && group.nation.value !== null) {
-    candidates.push({
-      name: "National",
-      value: group.nation.value,
-      color: CHART_SERIES.nation,
-    });
-  }
-  if (group.state !== undefined && group.state.value !== null) {
-    candidates.push({
-      name: "State",
-      value: group.state.value,
-      color: CHART_SERIES.state,
-    });
-  }
-
-  return candidates;
-}
-
-// ---------------------------------------------------------------------------
-// renderChartSvgString — server-side SVG via renderToStaticMarkup + recharts
-// ---------------------------------------------------------------------------
-
-// Recharts components imported via require + typed as ComponentType<Record<string,unknown>>
-// to avoid TypeScript strict overload checking on createElement. Recharts v2 class
-// components have `defaultProps` whose inferred types (e.g. `layout: string`) are wider
-// than their declared prop union (`"horizontal" | "vertical" | undefined`), causing TS2769
-// with React.createElement's strict overloads. Using `Record<string,unknown>` props type
-// routes through the widest createElement overload and preserves all runtime prop passing.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { BarChart, Bar, XAxis, YAxis, Cell } = require("recharts") as {
-  BarChart: React.ComponentType<Record<string, unknown>>;
-  Bar: React.ComponentType<Record<string, unknown>>;
-  XAxis: React.ComponentType<Record<string, unknown>>;
-  YAxis: React.ComponentType<Record<string, unknown>>;
-  Cell: React.ComponentType<Record<string, unknown>>;
-};
-
-/**
- * Renders a ChartDatum[] into an SVG string using recharts and react-dom/server.
- *
- * Used by the docx rasterizer to produce SVG before @resvg/resvg-js rasterizes it to PNG.
- * This function also serves as the Open Question 1 smoke test: calling it from a unit test
- * (chart-svg.test.ts) proves that recharts renderToStaticMarkup works in node env without
- * DOM errors before the PDF chart component is built.
- *
- * IMPORTANT: isAnimationActive={false} is MANDATORY on every <Bar>. Without it, recharts
- * animation code runs during renderToStaticMarkup and may produce empty or partial SVG output
- * (RESEARCH.md Pitfall 1 / react-pdf-charts Known Issues).
+ * Layout:
+ *   - Bars drawn left-to-right, one per datum (grouped bar chart, 1 bar per series).
+ *   - Y-axis on the left, labels on the bottom, series name + color in a simple legend.
+ *   - Bar height is proportional to value / maxValue * chartH (linear scale).
  *
  * @param data — ChartDatum array from buildChartData (filtered, non-null values only).
- * @param width — SVG width in px (default 300; keep small for docx DOCX-01 size budget).
- * @param height — SVG height in px (default 140; ~120 chart + 20 legend headroom).
- * @returns SVG markup string (non-empty if data is non-empty; contains <svg and bar geometry).
+ * @param width — SVG width in px (default 300).
+ * @param height — SVG height in px (default 140).
+ * @returns SVG markup string with xmlns (non-empty if data is non-empty).
  */
 export function renderChartSvgString(
   data: ChartDatum[],
@@ -124,21 +49,90 @@ export function renderChartSvgString(
 ): string {
   if (data.length === 0) return "";
 
-  // Build recharts element tree using React.createElement.
-  // isAnimationActive={false} is MANDATORY on Bar (Pitfall 1).
-  const barElement = React.createElement(
-    Bar,
-    { dataKey: "value", isAnimationActive: false },
-    ...data.map((d, i) => React.createElement(Cell, { key: i, fill: d.color })),
-  );
+  // Layout constants
+  const PAD_LEFT = 36; // y-axis label area
+  const PAD_RIGHT = 8;
+  const PAD_TOP = 8;
+  const PAD_BOTTOM = 40; // x labels + legend
+  const chartW = width - PAD_LEFT - PAD_RIGHT;
+  const chartH = height - PAD_TOP - PAD_BOTTOM;
+  const n = data.length;
+  const barW = Math.floor((chartW / n) * 0.6);
+  const barGap = Math.floor((chartW / n) * 0.4);
 
-  const chartElement = React.createElement(
-    BarChart,
-    { width, height, data },
-    React.createElement(XAxis, { dataKey: "name" }),
-    React.createElement(YAxis, null),
-    barElement,
-  );
+  // Y-axis: scale from 0 to max value (rounded up to a nice tick)
+  const maxVal = Math.max(...data.map((d) => d.value));
+  // Nice ceiling: round up to at least 1
+  const yMax = maxVal <= 0 ? 1 : Math.ceil(maxVal * 1.1);
 
-  return renderToStaticMarkup(chartElement as React.ReactElement);
+  // Helper: value → Y coordinate (SVG y grows downward)
+  const toY = (v: number) => PAD_TOP + chartH - Math.round((v / yMax) * chartH);
+
+  // ---- Bars ----
+  const bars = data
+    .map((d, i) => {
+      const x =
+        PAD_LEFT + Math.round((i * chartW) / n) + Math.round(barGap / 2);
+      const y = toY(d.value);
+      const barH = PAD_TOP + chartH - y;
+      return (
+        `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${escSvgAttr(d.color)}"/>` +
+        `<text x="${x + Math.round(barW / 2)}" y="${PAD_TOP + chartH + 12}" ` +
+        `font-size="9" text-anchor="middle" fill="#374151">${escSvgText(d.name)}</text>`
+      );
+    })
+    .join("\n  ");
+
+  // ---- Y-axis ticks (3 ticks: 0, yMax/2, yMax) ----
+  const yTicks = [0, yMax / 2, yMax]
+    .map((v) => {
+      const y = toY(v);
+      const label = v % 1 === 0 ? String(v) : v.toFixed(1);
+      return (
+        `<line x1="${PAD_LEFT - 4}" y1="${y}" x2="${PAD_LEFT}" y2="${y}" stroke="#9ca3af" stroke-width="1"/>` +
+        `<text x="${PAD_LEFT - 6}" y="${y + 4}" font-size="8" text-anchor="end" fill="#6b7280">${escSvgText(label)}</text>`
+      );
+    })
+    .join("\n  ");
+
+  // ---- Legend (one item per datum, centered below x labels) ----
+  const legendY = height - 10;
+  const legendItemW = 60;
+  const totalLegendW = n * legendItemW;
+  const legendStartX = Math.round((width - totalLegendW) / 2);
+  const legend = data
+    .map((d, i) => {
+      const lx = legendStartX + i * legendItemW;
+      return (
+        `<rect x="${lx}" y="${legendY - 8}" width="10" height="8" fill="${escSvgAttr(d.color)}"/>` +
+        `<text x="${lx + 12}" y="${legendY}" font-size="8" fill="#374151">${escSvgText(d.name)}</text>`
+      );
+    })
+    .join("\n  ");
+
+  // ---- Y-axis line ----
+  const axisLine = `<line x1="${PAD_LEFT}" y1="${PAD_TOP}" x2="${PAD_LEFT}" y2="${PAD_TOP + chartH}" stroke="#9ca3af" stroke-width="1"/>`;
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" style="background:#ffffff">` +
+    `\n  ${axisLine}` +
+    `\n  ${yTicks}` +
+    `\n  ${bars}` +
+    `\n  ${legend}` +
+    `\n</svg>`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SVG safety helpers — escape values before interpolation into SVG attributes/text
+// ---------------------------------------------------------------------------
+
+/** Escape a string for safe use inside an SVG attribute value (double-quoted). */
+function escSvgAttr(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+/** Escape a string for safe use inside SVG text content. */
+function escSvgText(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

@@ -25,7 +25,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import { buildChartData } from "@/lib/charts/chart-svg";
+import { buildChartData } from "@/lib/charts/chart-data";
 import type { MeasureGroup } from "@/lib/report/chart-utils";
 
 interface Props {
