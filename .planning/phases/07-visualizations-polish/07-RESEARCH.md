@@ -731,19 +731,21 @@ Per PITFALLS.md lines 426–437, this phase must pass the following against `htt
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **react-pdf-charts server-side DOM concern (A2)**
+> All three questions are resolved as of planning (2026-06-20). Resolutions folded into the Phase 7 plans (`07-0X-PLAN.md`); annotations added inline below.
+
+1. **react-pdf-charts server-side DOM concern (A2)** — **RESOLVED:** smoke-tested in Plan 07-02 Task 1 via `chart-svg.test.ts`, which calls `renderToStaticMarkup(<BarChart><Bar isAnimationActive={false} /></BarChart>)` in node env to prove clean SVG output before the PDF chart component is built; the hand-rolled react-pdf `<Svg>` rectangles fallback is the documented contingency if it throws.
    - What we know: `react-pdf-charts` uses `renderToStaticMarkup` from `react-dom/server`. recharts v2 has 0 occurrences of `typeof window` guards in its `lib/index.js` (checked), but its animation system may reference `requestAnimationFrame` or similar.
    - What's unclear: Whether recharts v2 BarChart with `isAnimationActive={false}` produces clean SVG output via `renderToStaticMarkup` in a route handler (no DOM).
    - Recommendation: Implement and test immediately in Wave 1 by calling `renderToStaticMarkup(<BarChart ...><Bar isAnimationActive={false} /></BarChart>)` from a unit test. If it throws, fall back to hand-rolling react-pdf SVG bar rectangles (harder but guaranteed to work).
 
-2. **Explicit vs positional metric grouping (D-15)**
+2. **Explicit vs positional metric grouping (D-15)** — **RESOLVED:** D-15 is a LOCKED decision in CONTEXT.md — use explicit `measureKey`/`source`. Plan 07-01 Task 1 adds these fields to `HospMetricSchema` first (schema-first, so they survive the export-route Zod boundary — rule #4), then to the `HospMetric` interface and all four `claims-mapper.ts` return paths.
    - What we know: The 12 rows are in fixed order. `METRIC_DEFINITIONS` has `measureKey` and `source` on each definition row.
    - What's unclear: Whether the planner wants to add `measureKey`/`source` to `HospMetric` + `HospMetricSchema` (more correct, requires schema change + test updates) vs derive groups positionally (simpler, fragile).
    - Recommendation: Add to `HospMetric`/`HospMetricSchema`. The schema change is minor; the robustness gain is significant. Must also be surfaced in the view-model passed to export routes.
 
-3. **PdfRow value cell type (ReactNode vs string)**
+3. **PdfRow value cell type (ReactNode vs string)** — **RESOLVED:** `PdfRatingRow` variant chosen (per PATTERNS.md Pattern 4) and implemented in Plan 07-01 Task 2 — a new row variant that accepts a `ReactNode` value slot for the star glyphs, leaving the existing `PdfRow` (`value: string`) untouched for all non-rating rows.
    - What we know: `PdfRow` in `ReportPDF.tsx` takes `value: string` and wraps it in `<Text>`.
    - What's unclear: Whether to change `PdfRow` to accept `React.ReactNode` (affects all rows) or introduce a `PdfRatingRow` variant (only for star rows).
    - Recommendation: Create `PdfRatingRow` that accepts a `ReactNode` in the value slot. Avoids touching all non-rating rows and keeps the type change localized.
