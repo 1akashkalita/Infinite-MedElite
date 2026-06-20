@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Phase 06-03 code-review fixes — CR-01 (callback-form replace, $ cannot corrupt OOXML) + WR-01 (manual field .max() caps) resolved; 4 footgun regression tests added; 278 tests green; xmllint well-formed with $-laden input; human UAT still awaiting"
-last_updated: "2026-06-20T09:40:51.388Z"
+status: ready_to_plan
+stopped_at: Phase 06 complete (3/3) — ready to discuss Phase 7
+last_updated: 2026-06-20T18:34:41.913Z
 last_activity: 2026-06-20
 progress:
   total_phases: 7
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-15)
 
 **Core value:** Enter a CCN → instantly get an accurate, polished, downloadable facility snapshot.
-**Current focus:** Phase 06 — docx-export
+**Current focus:** Phase 7 — visualizations & polish
 
 ## Current Position
 
-Phase: 06 (docx-export) — CHECKPOINT (awaiting human UAT re-verification; two Word bugs fixed: EMU/px logo + column-collapse)
+Phase: 7
 Phase: 07 (visualization) — NEXT (after UAT passes)
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-20
 
 Progress: [██████████] 100%
@@ -37,7 +37,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 18
+- Total plans completed: 21
 - Average duration: ~8 min/plan
 - Total execution time: ~16 minutes
 
@@ -51,6 +51,7 @@ Progress: [██████████] 100%
 | 03 | 4 | - | - |
 | 04 | 2 | - | - |
 | 05 | 4 | - | - |
+| 06 | 3 | - | - |
 
 **Recent Trend:**
 
