@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-06-20T01:04:39.933Z"
+status: checkpoint
+stopped_at: "Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT)"
+last_updated: "2026-06-20T01:10:44Z"
 last_activity: 2026-06-20
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 19
   completed_plans: 18
-  percent: 71
+  percent: 95
 ---
 
 # Project State
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-06-15)
 
 ## Current Position
 
-Phase: 06 (docx-export) — EXECUTING
-Phase: 03 (web-ui-core-flow-deployment) — NEXT
+Phase: 06 (docx-export) — CHECKPOINT (awaiting human UAT)
+Phase: 07 (visualization) — NEXT (after UAT passes)
 Plan: 3 of 3
-Status: Ready to execute
+Status: Paused at Task 3 checkpoint:human-verify
 Last activity: 2026-06-20
 
-Progress: [██████████] 95%
+Progress: [██████████████████████] 95%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [██████████] 95%
 | Phase 05-claims-based-metrics P01 | 12 | 2 tasks | 7 files |
 | Phase 05-claims-based-metrics P03 | 18 | 2 tasks | 4 files |
 | Phase 06-docx-export P02 | 8 | 2 tasks | 2 files |
+| Phase 06-docx-export P03 | 8min | 2 tasks (3rd at checkpoint) | 2 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Test assertions updated: Helvetica-Bold font resource + Document Title metadata (both uncompressed)
 - [Phase ?]: route.ts renamed to route.tsx in Phase 04-01
 - [Phase ?]: 05-01: AveragesRowSchema passthrough + formatFootnote Table-15 map added; nullableNum replicated inline in each new schema
+- [Phase 06-03]: D-02: DownloadPdfButton replaced by unified ExportControls — single component owns PDF|DOCX toggle + format state + loading/error states
+- [Phase 06-03]: D-03: PDF is the default pre-selected format in ExportControls toggle
+- [Phase 06-03]: T-06-08: ExportControls imports only ReportViewModel as a type — confirmed by next build passing (docx/ReportDocx never reached client bundle)
 
 ### Pending Todos
 
@@ -135,6 +139,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-20T01:04:39.893Z
-Stopped at: Phase 6 context gathered
-Resume file: None
+Last session: 2026-06-20T01:10:44Z
+Stopped at: Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT in Word + Google Docs)
+Resume file: .planning/phases/06-docx-export/06-03-SUMMARY.md
