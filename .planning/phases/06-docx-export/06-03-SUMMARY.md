@@ -54,10 +54,10 @@ decisions:
   - "rIdCmsLink guard: assert Id not already present before adding relationship — fails loudly if template changes"
   - "formatDate used for processing date in footer (UTC-safe, D-13)"
 metrics:
-  duration: "~35 minutes"
-  completed: "2026-06-20T02:15:00Z"
+  duration: "~40 minutes"
+  completed: "2026-06-20T02:40:00Z"
   tasks: 3
-  files: 2
+  files: 5
 ---
 
 # Phase 06 Plan 03: Template-Fill DOCX Builder Summary
@@ -171,6 +171,36 @@ No new network endpoints, auth paths, or trust boundary changes. Template fill i
 **Issue:** The official template has no footer, but CLAUDE.md rule #7 requires a clickable CMS link in the .docx export (consistent with the PDF). The project's core value is "Enter a CCN → instantly get an accurate, polished, downloadable facility snapshot" — the clickable Medicare link is a core correctness requirement.
 **Fix:** Inject a footer paragraph (blue underlined hyperlink + grey processing date) before the body-level `<w:sectPr>` and add `rIdCmsLink` External relationship to `word/_rels/document.xml.rels`. Proven via LibreOffice render before productionization. Guard added to fail loudly if template ever pre-assigns `rIdCmsLink`.
 **Decision:** User explicitly chose to add this (confirmed in orchestrator objective).
+
+## Polish Fixes (post-approval)
+
+Three small targeted fixes applied after the user approved the .docx output:
+
+### Fix 1: Right-align docx footer processing date
+
+**File:** `medelite-report/src/lib/docx/ReportDocx.ts`
+
+Added a right tab stop at `w:pos="9600"` (table width in dxa) to the footer paragraph's `<w:pPr>` and replaced the three leading-space padding in the date run with a `<w:tab/>` element. The `<w:tab/>` jumps to the right tab stop so the date text right-aligns to the table's right edge. The hyperlink on the left is unchanged.
+
+Test assertion added: the generated `document.xml` must contain `w:val="right"` and `w:pos="9600"` in a tab stop element.
+
+**Commit:** 8f9d2d0
+
+### Fix 2: Equal-width PDF/DOCX toggle buttons
+
+**File:** `medelite-report/src/components/ExportControls.tsx`
+
+Added `flex-1 text-center` to each toggle button's className. The container is already `flex overflow-hidden`, so `flex-1` on each button makes PDF and DOCX split the container 50/50 regardless of label character count.
+
+**Commit:** 86f9288
+
+### Fix 3: CCN input/placeholder text styling matches other fields
+
+**File:** `medelite-report/src/components/CCNSearchBar.tsx`
+
+Added `text-zinc-900 placeholder:text-zinc-400` to the CCN `<input>` className. ManualInputsForm already uses these classes; the CCN input now matches. Box dimensions, border, and focus ring are unchanged.
+
+**Commit:** f0512c1
 
 ## Self-Check: PASSED
 
