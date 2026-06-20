@@ -105,7 +105,7 @@ export function ExportControls({ vm }: Props) {
             aria-pressed={format === f}
             disabled={loading}
             className={[
-              "px-3 py-1 text-sm font-medium transition-colors",
+              "flex-1 px-3 py-1 text-sm font-medium text-center transition-colors",
               format === f
                 ? "bg-blue-600 text-white"
                 : "bg-white text-zinc-700 hover:bg-zinc-50",
