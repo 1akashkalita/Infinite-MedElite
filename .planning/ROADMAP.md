@@ -195,7 +195,7 @@ Plans:
 
 **Wave 2** *(depends on 06-01 — consumes buildReportDocx + the generalized slug)*
 
-- [ ] 06-02-PLAN.md — Route slice: Wave 0 `export-docx.test.ts` + `POST /api/export/docx` cloning the PDF contract (validate → `Packer.toBuffer` → OOXML headers; clean 400 envelope; PK-ZIP + 4.5 MB assertions)
+- [x] 06-02-PLAN.md — Route slice: Wave 0 `export-docx.test.ts` + `POST /api/export/docx` cloning the PDF contract (validate → `Packer.toBuffer` → OOXML headers; clean 400 envelope; PK-ZIP + 4.5 MB assertions)
 
 **Wave 3** *(depends on 06-02 — consumes the live /api/export/docx route)*
 
@@ -229,5 +229,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
-| 6. .docx Export | 1/3 | In Progress|  |
+| 6. .docx Export | 2/3 | In Progress|  |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
