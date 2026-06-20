@@ -217,6 +217,8 @@ export function joinClaimsAndAverages(
           value: null,
           unit,
           footnoteCode: "",
+          measureKey: def.measureCode as "521" | "522" | "551" | "552",
+          source: def.source as "facility" | "nation" | "state",
         };
       }
 
@@ -231,6 +233,8 @@ export function joinClaimsAndAverages(
           value: null,
           unit,
           footnoteCode,
+          measureKey: def.measureCode as "521" | "522" | "551" | "552",
+          source: def.source as "facility" | "nation" | "state",
         };
       }
 
@@ -239,6 +243,8 @@ export function joinClaimsAndAverages(
         label: def.label,
         value,
         unit,
+        measureKey: def.measureCode as "521" | "522" | "551" | "552",
+        source: def.source as "facility" | "nation" | "state",
       };
     }
 
@@ -253,6 +259,8 @@ export function joinClaimsAndAverages(
       label: def.label,
       value,
       unit,
+      measureKey: def.measureCode as "521" | "522" | "551" | "552",
+      source: def.source as "facility" | "nation" | "state",
       // No footnoteCode on average rows (averages don't carry footnote signals).
     };
   });

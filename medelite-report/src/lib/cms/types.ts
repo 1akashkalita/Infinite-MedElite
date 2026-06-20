@@ -58,6 +58,19 @@ export interface HospMetric {
    * formatFootnote(footnoteCode) maps this to a human-readable suppression message.
    */
   footnoteCode?: string;
+
+  /**
+   * D-15: measure group key for chart rendering (Phase 7).
+   * Matches METRIC_DEFINITIONS measureCode in claims-mapper.ts.
+   * Used by groupByMeasure() in chart-utils.ts to bucket the 12 flat rows into 4 groups.
+   */
+  measureKey: "521" | "522" | "551" | "552";
+
+  /**
+   * D-15: data source within the measure group.
+   * Used by groupByMeasure() to populate facility/nation/state slots in each MeasureGroup.
+   */
+  source: "facility" | "nation" | "state";
 }
 
 export interface FacilityData {

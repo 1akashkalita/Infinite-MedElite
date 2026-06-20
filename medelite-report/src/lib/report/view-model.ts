@@ -8,7 +8,11 @@
 //             nameOverride affects ONLY the body displayName; the static header is unaffected.
 //   RPT-01: assembleHeader is called with facility.state ONLY (no facility-name arg, rule #2).
 //   D-08: ReportViewModel carries raw number | null — formatters run at render time.
-//         Charts (Phase 7) also read raw values; never pre-stringify in the model.
+//         Charts (Phase 7) also read raw values and use measureKey/source for grouping;
+//         never pre-stringify in the model.
+//   D-15: HospMetric now carries measureKey + source so Plan 02 charts can group them.
+//         HospMetricSchema extended with closed z.enum fields BEFORE HospMetric interface
+//         so the POST /api/export/* validation boundary doesn't strip these fields (Pitfall 6).
 //   D-16: careCompareUrl = https://www.medicare.gov/care-compare/details/nursing-home/{ccn}
 //   D-12: Two dates — generatedAt (when snapshot was generated) + processingDate (CMS freshness).
 //   D-21: ReportViewModelSchema is THE canonical Zod schema — POST /api/export/pdf validates
@@ -59,6 +63,17 @@ const HospMetricSchema = z.object({
   unit: z.enum(["percent", "rate"]),
   /** CMS footnote code. Present on facility rows with suppression; absent on average rows. */
   footnoteCode: z.string().optional(),
+  /**
+   * D-15: measure group key for chart grouping (Phase 7).
+   * Closed enum — prevents injection of arbitrary grouping keys via a crafted POST body (T-7-01).
+   * Matches METRIC_DEFINITIONS measureCode in claims-mapper.ts.
+   */
+  measureKey: z.enum(["521", "522", "551", "552"]),
+  /**
+   * D-15: data source within the measure group.
+   * Closed enum — prevents injection of arbitrary source values via a crafted POST body (T-7-01).
+   */
+  source: z.enum(["facility", "nation", "state"]),
 });
 
 // ---------------------------------------------------------------------------
