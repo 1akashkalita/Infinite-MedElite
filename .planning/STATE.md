@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: checkpoint
-stopped_at: "Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT)"
-last_updated: "2026-06-20T01:10:44Z"
-last_activity: 2026-06-20
+stopped_at: "Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT re-verification after EMU/px fix)"
+last_updated: "2026-06-19T22:01:00Z"
+last_activity: 2026-06-19
 progress:
   total_phases: 7
   completed_phases: 5
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-06-15)
 
 ## Current Position
 
-Phase: 06 (docx-export) — CHECKPOINT (awaiting human UAT)
+Phase: 06 (docx-export) — CHECKPOINT (awaiting human UAT re-verification; EMU/px fix applied)
 Phase: 07 (visualization) — NEXT (after UAT passes)
 Plan: 3 of 3
-Status: Paused at Task 3 checkpoint:human-verify
-Last activity: 2026-06-20
+Status: Paused at Task 3 checkpoint:human-verify (re-verification needed after DOCX-EMU-01 fix)
+Last activity: 2026-06-19
 
 Progress: [██████████████████████] 95%
 
@@ -114,6 +114,10 @@ Recent decisions affecting current work:
 - [Phase 06-03]: D-02: DownloadPdfButton replaced by unified ExportControls — single component owns PDF|DOCX toggle + format state + loading/error states
 - [Phase 06-03]: D-03: PDF is the default pre-selected format in ExportControls toggle
 - [Phase 06-03]: T-06-08: ExportControls imports only ReportViewModel as a type — confirmed by next build passing (docx/ReportDocx never reached client bundle)
+- [Phase 06-03 fix]: DOCX-EMU-01: docx ImageRun transformation takes PIXELS (not EMU); docx multiplies px×9525 internally — passing EMU produced ~17 billion EMU extent, Word-rejected
+- [Phase 06-03 fix]: PREVIEW-WIDTH: report preview capped at max-w-[816px] (US-Letter 8.5in at 96 DPI) across all three render states
+- [Phase 06-03 fix]: LABEL-01: footer label "CMS dataset processing date" across all three renderers
+- [Phase 06-03 fix]: TITLE-01: page title "Infinite — Medelite"
 
 ### Pending Todos
 
@@ -139,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-20T01:10:44Z
-Stopped at: Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT in Word + Google Docs)
+Last session: 2026-06-19T22:01:00Z
+Stopped at: Phase 06-03 Task 3 — checkpoint:human-verify (Download DOCX UAT re-verification; EMU/px bug fixed; also applied: footer relabel, preview width cap, page title)
 Resume file: .planning/phases/06-docx-export/06-03-SUMMARY.md

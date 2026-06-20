@@ -199,7 +199,7 @@ Plans:
 
 **Wave 3** *(depends on 06-02 — consumes the live /api/export/docx route)*
 
-- [x] 06-03-PLAN.md — Client slice: `ExportControls` (PDF|DOCX toggle, D-01..D-05) replaces `DownloadPdfButton` in `SnapshotApp`; closes DOCX-01 end-to-end; `verify:full` phase gate + human UAT (Tasks 1–2 complete; Task 3 awaiting human UAT)
+- [x] 06-03-PLAN.md — Client slice: `ExportControls` (PDF|DOCX toggle, D-01..D-05) replaces `DownloadPdfButton` in `SnapshotApp`; closes DOCX-01 end-to-end; `verify:full` phase gate + human UAT (Tasks 1–2 complete; EMU/px fix applied + regression test; Task 3 awaiting human re-verification)
 
 ### Phase 7: Visualizations & Polish
 
@@ -229,5 +229,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Web UI, Core Flow & Deployment | 4/4 | Complete   | 2026-06-18 |
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
-| 6. .docx Export | 3/3 | Checkpoint (human UAT pending) |  |
+| 6. .docx Export | 3/3 | Checkpoint (human UAT re-verification pending after EMU fix) |  |
 | 7. Visualizations & Polish | 0/TBD | Not started | - |
