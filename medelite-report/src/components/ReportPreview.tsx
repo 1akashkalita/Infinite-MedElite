@@ -95,9 +95,10 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
  */
 export function ReportPreview({ vm, fetchState }: Props) {
   // Skeleton — show for idle (no search yet) and loading (fetch in progress)
+  // mx-auto + max-w-[816px]: caps to ~US-Letter width (8.5in at 96 DPI) and centers the sheet
   if (fetchState === "idle" || fetchState === "loading") {
     return (
-      <div className="bg-white rounded shadow p-8 animate-pulse space-y-4">
+      <div className="mx-auto w-full max-w-[816px] bg-white rounded shadow p-8 animate-pulse space-y-4">
         <div className="h-12 bg-gray-200 rounded w-1/2 mx-auto" />
         <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto" />
         <div className="h-px bg-gray-100 my-4" />
@@ -111,7 +112,7 @@ export function ReportPreview({ vm, fetchState }: Props) {
   // Error state with no vm — show a minimal placeholder (ErrorBanner is rendered separately)
   if (!vm) {
     return (
-      <div className="bg-white rounded shadow p-8 text-sm text-zinc-400 min-h-[200px] flex items-center justify-center">
+      <div className="mx-auto w-full max-w-[816px] bg-white rounded shadow p-8 text-sm text-zinc-400 min-h-[200px] flex items-center justify-center">
         Enter a CCN above to generate the report preview.
       </div>
     );
@@ -121,8 +122,10 @@ export function ReportPreview({ vm, fetchState }: Props) {
   const m = vm.manual;
 
   // Success — render the full template
+  // mx-auto + max-w-[816px]: caps to ~US-Letter width (8.5in at 96 DPI) so the preview
+  // reads as a centered sheet of paper on wide screens (mirrors the PDF dimensions).
   return (
-    <article className="bg-white rounded shadow p-8 text-sm text-zinc-800">
+    <article className="mx-auto w-full max-w-[816px] bg-white rounded shadow p-8 text-sm text-zinc-800">
       {/* ------------------------------------------------------------------ */}
       {/* HEADER — INFINITE logo image (rule #2: static branding, never the   */}
       {/* facility name) + report title + dynamic state. Centered.           */}
