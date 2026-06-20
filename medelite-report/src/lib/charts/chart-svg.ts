@@ -75,7 +75,7 @@ export function renderChartSvgString(
 
   // ---- Optional bold title ----
   const titleEl = label
-    ? `<text x="${PAD_LEFT}" y="${TITLE_H - 2}" font-size="10" font-weight="bold" fill="#111827">${escSvgText(label)}</text>`
+    ? `<text x="${PAD_LEFT}" y="${TITLE_H - 2}" font-size="11.5" font-weight="bold" fill="#111827">${escSvgText(label)}</text>`
     : "";
 
   // ---- Bars + X-axis category labels ----
@@ -88,7 +88,7 @@ export function renderChartSvgString(
       return (
         `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${escSvgAttr(d.color)}"/>` +
         `<text x="${x + Math.round(barW / 2)}" y="${PAD_TOP + chartH + 12}" ` +
-        `font-size="9" text-anchor="middle" fill="#374151">${escSvgText(d.name)}</text>`
+        `font-size="10.5" text-anchor="middle" fill="#374151">${escSvgText(d.name)}</text>`
       );
     })
     .join("\n  ");
@@ -100,7 +100,7 @@ export function renderChartSvgString(
       const label = v % 1 === 0 ? String(Math.round(v)) : v.toFixed(1);
       return (
         `<line x1="${PAD_LEFT - 4}" y1="${y}" x2="${PAD_LEFT}" y2="${y}" stroke="#9ca3af" stroke-width="1"/>` +
-        `<text x="${PAD_LEFT - 6}" y="${y + 4}" font-size="8" text-anchor="end" fill="#6b7280">${escSvgText(label)}</text>`
+        `<text x="${PAD_LEFT - 6}" y="${y + 4}" font-size="9.5" text-anchor="end" fill="#6b7280">${escSvgText(label)}</text>`
       );
     })
     .join("\n  ");
