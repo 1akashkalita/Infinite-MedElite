@@ -34,7 +34,7 @@ import type { ManualInputs } from "@/lib/report/view-model";
 import { assembleViewModel } from "@/lib/report/view-model";
 import { getErrorPresentation } from "@/lib/ui/error-presentation";
 import { CCNSearchBar } from "@/components/CCNSearchBar";
-import { DownloadPdfButton } from "@/components/DownloadPdfButton";
+import { ExportControls } from "@/components/ExportControls";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { ManualInputsForm } from "@/components/ManualInputsForm";
 import { ReportPreview } from "@/components/ReportPreview";
@@ -190,12 +190,12 @@ export function SnapshotApp() {
           disabled={!facilityData}
         />
 
-        {/* Download PDF button — D-05/D-07/D-08 (Plan 04-02).                          */}
+        {/* Export controls — D-01..D-05 / D-07 / D-08 (Plan 06-03).                    */}
         {/* Reads the already-assembled vm from state — no re-fetch, no re-assemble.     */}
         {/* When vm is null (no successful fetch yet), renders disabled (D-07).          */}
-        {/* Safe import: DownloadPdfButton is "use client" and never imports             */}
-        {/* @react-pdf/renderer or ReportPDF (T-03-09 discipline preserved).             */}
-        <DownloadPdfButton vm={vm} />
+        {/* Safe import: ExportControls is "use client" and never imports                */}
+        {/* docx, @react-pdf/renderer, or ReportPDF (T-06-08 discipline preserved).     */}
+        <ExportControls vm={vm} />
       </div>
 
       {/* Right pane — paper-like preview */}

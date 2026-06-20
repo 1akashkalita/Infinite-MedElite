@@ -83,9 +83,7 @@ export function ExportControls({ vm }: Props) {
     } catch {
       // D-08: surface a fixed UI-authored string; never the raw server response or Zod internals.
       // Keep button enabled for retry (loading will be cleared in finally).
-      setExportError(
-        `Couldn't generate ${format.toUpperCase()} — try again.`,
-      );
+      setExportError(`Couldn't generate ${format.toUpperCase()} — try again.`);
     } finally {
       setLoading(false);
     }
