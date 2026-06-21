@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: PDF Export** - react-pdf document, server-side PDF route, Download PDF button, Medicare link (completed 2026-06-18)
 - [x] **Phase 5: Claims-Based Metrics** - 12 hospitalization/ED data points from CMS, suppressed-value handling, metrics in UI + PDF (completed 2026-06-19)
 - [x] **Phase 6: .docx Export** - Word document builder, export route, Download DOCX button (completed 2026-06-20)
-- [ ] **Phase 7: Visualizations & Polish** - Star rating cards, recharts/react-pdf-charts, live preview debounce, Vercel smoke test
+- [x] **Phase 7: Visualizations & Polish** - Star rating cards, recharts/react-pdf-charts, live preview debounce, Vercel smoke test (completed 2026-06-21)
 
 ## Phase Details
 
@@ -226,7 +226,7 @@ Plans:
 
 **Wave 3** *(depends on 07-01 + 07-02 — smoke-tests the stars + charts; shared SnapshotApp file)*
 
-- [ ] 07-03-PLAN.md — Debounce + live-Vercel polish slice: `useDebounce` 300ms hook + SnapshotApp wiring (no CMS re-fetch), then the full "Looks Done But Isn't" SC#4 checklist on the live URL + `verify:full` phase gate (D-14, SC#3, SC#4)
+- [x] 07-03-PLAN.md — Debounce + live-Vercel polish slice: `useDebounce` 300ms hook + SnapshotApp wiring (no CMS re-fetch), then the full "Looks Done But Isn't" SC#4 checklist on the live URL + `verify:full` phase gate (D-14, SC#3, SC#4)
 
 **UI hint**: yes
 
@@ -243,4 +243,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. PDF Export | 2/2 | Complete   | 2026-06-18 |
 | 5. Claims-Based Metrics | 4/4 | Complete   | 2026-06-19 |
 | 6. .docx Export | 3/3 | Complete   | 2026-06-20 |
-| 7. Visualizations & Polish | 2/3 | In Progress|  |
+| 7. Visualizations & Polish | 3/3 | Complete   | 2026-06-21 |
