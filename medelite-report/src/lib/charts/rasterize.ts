@@ -22,17 +22,16 @@ import { getChartFontFiles, CHART_FONT_FAMILY } from "@/lib/charts/chart-font";
  * Keep width/height small (≤300×140) to respect the DOCX-01 size budget — 4 chart PNGs
  * at 300×140 add ~60–200 KB total, well within the 4.5 MB limit (RESEARCH.md Pitfall 3).
  *
+ * WR-03: width-only by design. resvg's `fitTo: { mode: "width" }` preserves the SVG's
+ * intrinsic aspect ratio, so output height is governed by the width/height attributes the
+ * caller bakes into the SVG via renderChartSvgString(data, w, h) — NOT by a height arg here.
+ * The previous dead `height` param hid this coupling; removed to make the contract explicit.
+ *
  * @param svgString — A valid SVG markup string (from renderChartSvgString).
- * @param width — Output PNG width in pixels (default 300).
- * @param height — Output PNG height in pixels (default 140); unused directly (fitTo mode=width scales proportionally).
+ * @param width — Output PNG width in pixels (default 300); height follows the SVG's aspect ratio.
  * @returns Buffer whose first 8 bytes are the PNG magic: 0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A.
  */
-export function svgToPngBuffer(
-  svgString: string,
-  width = 300,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  height = 140,
-): Buffer {
+export function svgToPngBuffer(svgString: string, width = 300): Buffer {
   // RESVG-FONT-01: supply an embedded font + disable system fonts so SVG <text> renders
   // identically on macOS and Vercel Lambda (Lambda has no system fonts → blank chart labels).
   const resvg = new Resvg(svgString, {

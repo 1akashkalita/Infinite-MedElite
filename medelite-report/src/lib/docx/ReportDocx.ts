@@ -402,7 +402,9 @@ export async function buildReportDocxBuffer(
         continue;
       }
 
-      const png = svgToPngBuffer(svg, RASTER_W_PX, RASTER_H_PX);
+      // Height follows the SVG's aspect ratio (authored as RASTER_W_PX×RASTER_H_PX above),
+      // so width-only rasterization yields the intended 2:1 PNG matching the EMU box (WR-03).
+      const png = svgToPngBuffer(svg, RASTER_W_PX);
 
       // Add PNG to word/media/
       const mediaPath = `word/media/chart-${i}.png`;

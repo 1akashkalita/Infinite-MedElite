@@ -10,7 +10,7 @@
 //
 // NO "use client" — server-only. Import only from rasterize.ts / server modules.
 
-import { writeFileSync, existsSync } from "node:fs";
+import { writeFileSync, existsSync, statSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -28,15 +28,28 @@ let cachedPaths: string[] | null = null;
  * Materializes the embedded fonts to the OS temp dir (once per process) and returns their
  * absolute paths for resvg fontFiles. Idempotent: skips writing if the files already exist.
  */
+/**
+ * WR-01: materialize one embedded font atomically. Trusting bare existsSync would hand a
+ * zero-length/truncated file (crashed prior write, concurrent worker on a warm Lambda) to
+ * resvg with loadSystemFonts:false — silently reproducing the exact blank-label failure
+ * RESVG-FONT-01 prevents. Skip only when the on-disk size matches the decoded buffer; else
+ * write to a pid-scoped temp name and rename (atomic on the same filesystem).
+ */
+function ensureFont(path: string, b64: string): void {
+  const buf = Buffer.from(b64, "base64");
+  if (existsSync(path) && statSync(path).size === buf.length) return;
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, buf);
+  renameSync(tmp, path);
+}
+
 export function getChartFontFiles(): string[] {
   if (cachedPaths) return cachedPaths;
   const dir = tmpdir();
   const reg = join(dir, "infinite-dejavusans.ttf");
   const bold = join(dir, "infinite-dejavusans-bold.ttf");
-  if (!existsSync(reg))
-    writeFileSync(reg, Buffer.from(DVS_REGULAR_B64, "base64"));
-  if (!existsSync(bold))
-    writeFileSync(bold, Buffer.from(DVS_BOLD_B64, "base64"));
+  ensureFont(reg, DVS_REGULAR_B64);
+  ensureFont(bold, DVS_BOLD_B64);
   cachedPaths = [reg, bold];
   return cachedPaths;
 }

@@ -63,12 +63,12 @@ describe("svgToPngBuffer", () => {
   });
 
   it("accepts custom width parameter without throwing", () => {
-    expect(() => svgToPngBuffer(SIMPLE_SVG, 200, 100)).not.toThrow();
+    expect(() => svgToPngBuffer(SIMPLE_SVG, 200)).not.toThrow();
   });
 
   it("smaller width produces a smaller buffer than default", () => {
-    const bufDefault = svgToPngBuffer(SIMPLE_SVG, 300, 140);
-    const bufSmall = svgToPngBuffer(SIMPLE_SVG, 100, 50);
+    const bufDefault = svgToPngBuffer(SIMPLE_SVG, 300);
+    const bufSmall = svgToPngBuffer(SIMPLE_SVG, 100);
     // Smaller dimensions = fewer pixels = smaller PNG (generally)
     expect(bufSmall.length).toBeLessThan(bufDefault.length);
   });

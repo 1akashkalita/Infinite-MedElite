@@ -69,6 +69,14 @@ export function formatLocation(address: {
  */
 export function formatDate(value: Date | string): string {
   const d = typeof value === "string" ? new Date(value) : value;
+  // WR-02: processingDate is only z.string() (no date-format constraint). Guard against an
+  // unparseable value so the footer never renders the literal "Invalid Date" — fall back to
+  // the raw CMS string (if any) over a misleading formatted output.
+  if (Number.isNaN(d.getTime())) {
+    return typeof value === "string" && value.trim() !== ""
+      ? value
+      : PLACEHOLDER;
+  }
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
