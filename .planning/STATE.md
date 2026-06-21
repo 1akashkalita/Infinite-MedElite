@@ -2,36 +2,33 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: milestone_complete
-stopped_at: Milestone complete (Phase 07 was final phase)
-last_updated: 2026-06-21T00:24:15.491Z
-last_activity: 2026-06-20
+status: Awaiting next milestone
+stopped_at: Phase 7 context gathered
+last_updated: "2026-06-21T00:44:27.515Z"
+last_activity: 2026-06-21 — Milestone v1.0 completed and archived
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 22
   completed_plans: 22
-  percent: 86
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-15)
+See: .planning/PROJECT.md (updated 2026-06-21)
 
 **Core value:** Enter a CCN → instantly get an accurate, polished, downloadable facility snapshot.
-**Current focus:** Milestone complete
+**Current focus:** v1.0 shipped — planning next milestone (start with /gsd:new-milestone)
 
 ## Current Position
 
-Phase: 07
-Phase: 07 (visualization) — NEXT (after UAT passes)
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-21
-
-Progress: [██████████] 95%
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-21 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -150,9 +147,19 @@ None yet.
 |----------|------|--------|-------------|
 | v2 | BENCH-01: State/national average columns next to claims metrics | Deferred | Init |
 | v2 | BENCH-02: Comparison charts (facility vs state/national) | Deferred | Init |
+| uat_gap | 04-HUMAN-UAT.md: 7 PDF-viewer scenarios pending | partial | v1.0 close 2026-06-21 |
+| uat_gap | 07-HUMAN-UAT.md: leading-zero CCN + N/A suppression live spot-checks | partial | v1.0 close 2026-06-21 |
+| verification | 04/06/07-VERIFICATION.md: human_needed (automated passed, human testing pending) | human_needed | v1.0 close 2026-06-21 |
+| nyquist | Nyquist validation PARTIAL on Phases 1–6 (run /gsd:validate-phase N to close) | partial | v1.0 close 2026-06-21 |
+| quick_task | 260619-fw4-rebrand-infinite: missing status metadata (cosmetic) | missing | v1.0 close 2026-06-21 |
+| cleanup | Dead code src/components/DownloadPdfButton.tsx (superseded by ExportControls) | deferred | v1.0 close 2026-06-21 |
 
 ## Session Continuity
 
 Last session: 2026-06-20T21:49:26.899Z
 Stopped at: Phase 7 context gathered
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
